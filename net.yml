@@ -1,0 +1,56 @@
+version: '3.3'
+services:
+  consul:
+    image: jbonachera/consul
+    environment:
+      - SERVICE_NAME=consul
+      - MIN_NODES_SIZE=3
+      - EMERGENCY_RECOVERY=true
+    networks:
+      - priv
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 30s
+      restart_policy:
+        condition: any
+  traefik:
+    image: traefik:1.4
+    deploy:
+      mode: replicated
+      replicas: 1
+    networks:
+      - pub
+      - priv
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    ports:
+      - 443:443
+      - 8080:8080
+      - 80:80
+    command:
+      -  "--insecureskipverify=true"
+      -  "--docker"
+      -  "--docker.swarmmode"
+      -  "--docker.watch"
+      -  "--acme"
+      -  "--acme.email=julien@bonachera.fr"
+      -  "--acme.entryPoint=https"
+      -  "--consul"
+      -  "--consul.endpoint=consul:8500"
+      -  "--consul.tls=false"
+      -  "--acme.storage=traefik/acme/account"
+      -  "--entryPoints=Name:http Address::80"
+      -  "--entryPoints=Name:https Address::443 TLS"
+      -  "--defaultentrypoints=https"
+      -  "--acme.ondemand"
+      -  "--web"
+      -  "--web.statistics"
+
+networks:
+  pub:
+  priv:
