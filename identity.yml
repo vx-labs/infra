@@ -1,0 +1,71 @@
+version: '3.3'
+services:
+  authorization:
+    image: vxlabs/authorization
+    healthcheck:
+      test: ["CMD", "true"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    networks:
+      - net_pub
+      - authz
+      - rethinkdb
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 5s
+      restart_policy:
+        condition: any
+      labels:
+        traefik.enable: 'true'
+        traefik.frontend.entryPoints: https
+        traefik.frontend.rule: Host:authorization.cloud.vx-labs.net
+        traefik.port: '8007'
+        traefik.docker.network: 'net_pub'
+    environment:
+      - LOG_FORMAT=json
+      - LOG_LEVEL=info
+      - APPROLE_ID=a06ec660-3c7a-3fce-35b6-999e725ce890
+      - APPROLE_SECRET=7d647a23-2e33-48c0-edec-b25c39919259
+      - RETHINKDB_URL=rethinkdb:28015
+      - ORIGIN=*
+  rethinkdb:
+    image: jbonachera/rethinkdb
+    environment:
+      - SERVICE_NAME=rethinkdb
+    healthcheck:
+      test: ["CMD", "true"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    networks:
+      - rethinkdb
+      - net_pub
+    deploy:
+      mode: global
+      update_config:
+        parallelism: 1
+        delay: 30s
+      restart_policy:
+        condition: any
+      labels:
+        traefik.enable: 'false'
+        traefik.frontend.entryPoints: https
+        traefik.frontend.rule: Host:rethink.identity.cloud.vx-labs.net
+        traefik.backend.loadbalancer.sticky: 'true'
+        traefik.docker.network: 'net_pub'
+        traefik.port: '8080'
+    volumes:
+      - type: volume
+        source: rethinkdb
+        target: /var/lib/rethinkdb
+volumes:
+  rethinkdb:
+networks:
+  rethinkdb:
+  authz:
+  net_pub:
+    external: true
