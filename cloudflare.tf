@@ -15,3 +15,11 @@ resource "cloudflare_record" "cluster_masters" {
   type   = "A"
   ttl    = 1
 }
+resource "cloudflare_record" "cluster_lb" {
+  count  = "${var.lb_count}"
+  domain = "${var.cloudflare_domain}"
+  name   = "entrypoint.${var.region}"
+  value  = "${element(scaleway_server.nomad-lb.*.private_ip, count.index)}"
+  type   = "A"
+  ttl    = 1
+}

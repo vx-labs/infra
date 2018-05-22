@@ -4,3 +4,6 @@ variable "master_count" {
 variable "agent_count" {
   default = 1
 }
+variable "lb_count" {
+  default = 1
+}

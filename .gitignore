@@ -1,3 +1,4 @@
 secrets
 .env
 .terraform
+terraform.tfstate*

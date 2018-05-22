@@ -7,7 +7,11 @@ data "scaleway_image" "agent" {
   architecture = "x86_64"
   name         = "coreos-nomad-agent"
 }
-data "scaleway_image" "coreos" {
+data "scaleway_image" "server" {
+  architecture = "x86_64"
+  name         = "coreos-nomad-server"
+}
+data "scaleway_image" "lb" {
   architecture = "x86_64"
   name         = "coreos-nomad-server"
 }
@@ -19,7 +23,7 @@ provider "scaleway" {
 
 resource "scaleway_server" "nomad" {
   name  = "nomad"
-  image = "${data.scaleway_image.coreos.id}"
+  image = "${data.scaleway_image.server.id}"
   dynamic_ip_required = true
   enable_ipv6 = false
   type  = "START1-S"
@@ -34,6 +38,16 @@ resource "scaleway_server" "nomad-agent" {
   enable_ipv6 = false
   type  = "START1-S"
   count = "${var.agent_count}"
+  boot_type = "local"
+  security_group = "${scaleway_security_group.private_ip.id}"
+}
+resource "scaleway_server" "nomad-lb" {
+  name  = "nomad-agent"
+  image = "${data.scaleway_image.lb.id}"
+  dynamic_ip_required = true
+  enable_ipv6 = false
+  type  = "START1-S"
+  count  = "${var.lb_count}"
   boot_type = "local"
   security_group = "${scaleway_security_group.private_ip.id}"
 }
