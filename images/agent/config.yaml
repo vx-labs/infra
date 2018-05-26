@@ -62,4 +62,17 @@ systemd:
         ExecStart=/usr/bin/docker run --name nomad-agent  --net=host --privileged -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/nomad:/var/lib/nomad --rm jbonachera/nomad-agent agent -config=/etc/nomad  -servers servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net:4647
         [Install]
         WantedBy=basic.target
+    - name: linkerd.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run linkerd
+        Requires=network-online.target coreos-metadata.service
+        After=coreos-metadata.service
+        [Service]
+        Restart=always
+        EnvironmentFile=-/run/metadata/coreos
+        ExecStart=/usr/bin/docker run --name linked --net=host jbonachera/linkerd
+        [Install]
+        WantedBy=basic.target
 
