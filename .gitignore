@@ -2,3 +2,4 @@ secrets
 .env
 .terraform
 terraform.tfstate*
+.vagrant
