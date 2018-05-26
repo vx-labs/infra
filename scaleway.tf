@@ -26,7 +26,7 @@ resource "scaleway_server" "nomad" {
   image = "${data.scaleway_image.server.id}"
   dynamic_ip_required = true
   enable_ipv6 = false
-  type  = "START1-S"
+  type  = "START1-XS"
   count = "${var.master_count}"
   boot_type = "local"
   security_group = "${scaleway_security_group.private_ip.id}"
@@ -36,17 +36,17 @@ resource "scaleway_server" "nomad-agent" {
   image = "${data.scaleway_image.agent.id}"
   dynamic_ip_required = true
   enable_ipv6 = false
-  type  = "START1-S"
+  type  = "START1-XS"
   count = "${var.agent_count}"
   boot_type = "local"
   security_group = "${scaleway_security_group.private_ip.id}"
 }
 resource "scaleway_server" "nomad-lb" {
-  name  = "nomad-agent"
+  name  = "nomad-lb"
   image = "${data.scaleway_image.lb.id}"
   dynamic_ip_required = true
   enable_ipv6 = false
-  type  = "START1-S"
+  type  = "START1-XS"
   count  = "${var.lb_count}"
   boot_type = "local"
   security_group = "${scaleway_security_group.private_ip.id}"
