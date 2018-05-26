@@ -13,7 +13,7 @@ data "scaleway_image" "server" {
 }
 data "scaleway_image" "lb" {
   architecture = "x86_64"
-  name         = "coreos-nomad-server"
+  name         = "coreos-nomad-lb"
 }
 provider "scaleway" {
   organization = "${var.scw_api_organization}"
