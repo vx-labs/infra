@@ -53,8 +53,8 @@ resource "scaleway_server" "nomad-lb" {
 }
 
 resource "scaleway_security_group" "private_ip" {
-  name        = "http"
-  description = "allow HTTP and HTTPS traffic"
+  name        = "ssh"
+  description = "allow SSH traffic from trusted IP"
 }
 
 resource "scaleway_security_group_rule" "ssh_accept" {
@@ -68,6 +68,7 @@ resource "scaleway_security_group_rule" "ssh_accept" {
 }
 resource "scaleway_security_group_rule" "drop_all_ssh" {
   security_group = "${scaleway_security_group.private_ip.id}"
+  depends_on = ["scaleway_security_group_rule.ssh_accept"]
 
   action    = "drop"
   direction = "inbound"
