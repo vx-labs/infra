@@ -1,4 +1,4 @@
-job "example" {
+job "hello" {
   datacenters = ["dc1"]
   type = "service"
   update {
