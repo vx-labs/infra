@@ -49,7 +49,7 @@ systemd:
         ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
         [Install]
         WantedBy=basic.target
-    - name: nomad-agent.service
+    - name: fabio.service
       enabled: true
       contents: |
         [Unit]
@@ -59,7 +59,7 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --name fabio --net=host fabiolb/fabio:1.5.9-go1.10.2 /fabio -cfg /etc/fabio/fabio.properties -proxy.addr ':1883;proto=tcp,:8883;proto=tcp,:80;proto=http,:443;proto=tcp+sni'
+        ExecStart=/usr/bin/docker run --rm --name fabio --net=host fabiolb/fabio:1.5.9-go1.10.2 /fabio -cfg /etc/fabio/fabio.properties -proxy.addr ':1883;proto=tcp,:8883;proto=tcp,:80;proto=http,:443;proto=tcp+sni'
         [Install]
         WantedBy=basic.target
 
