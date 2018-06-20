@@ -72,7 +72,7 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --name linked --net=host jbonachera/linkerd
+        ExecStart=/usr/bin/docker run --rm --name linked --net=host jbonachera/linkerd
         [Install]
         WantedBy=basic.target
 
