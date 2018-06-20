@@ -97,6 +97,28 @@ resource "scaleway_security_group_rule" "drop_all_consul_agent" {
   port = 8500
 }
 
+resource "scaleway_security_group_rule" "nomad_accept" {
+  security_group = "${scaleway_security_group.private_ip.id}"
+
+  action    = "accept"
+  direction = "inbound"
+  ip_range  = "92.169.229.177"
+  protocol  = "TCP"
+  port      = 4646
+}
+
+resource "scaleway_security_group_rule" "drop_all_nomad" {
+  security_group = "${scaleway_security_group.private_ip.id}"
+  depends_on = ["scaleway_security_group_rule.nomad_accept"]
+
+  action    = "drop"
+  direction = "inbound"
+  ip_range  = "0.0.0.0/0"
+  protocol  = "TCP"
+  port = 4646
+}
+
+
 
 output "cluster" {
 value = "${join("\n",scaleway_server.nomad.*.public_ip)}"
