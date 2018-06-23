@@ -49,6 +49,20 @@ systemd:
         ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -server -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net -bootstrap-expect=3
         [Install]
         WantedBy=basic.target
+    - name: vault.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run vault server
+        Requires=network-online.target coreos-metadata.service
+        After=coreos-metadata.service
+        [Service]
+        Restart=always
+        EnvironmentFile=-/run/metadata/coreos
+        ExecStart=/usr/bin/docker run --rm --name vault --net=host --cap-add=IPC_LOCK -e 'VAULT_LOCAL_CONFIG={"listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": true}}, "backend": {"consul": {}}, "default_lease_ttl": "168h", "max_lease_ttl": "720h"}' vault server
+        [Install]
+        WantedBy=basic.target
+
     - name: nomad.service
       enabled: true
       contents: |
