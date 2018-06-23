@@ -21,6 +21,6 @@ terraform apply
 
 ## TODO
 
-[x] Vault
-[] TLS
-[] ACL and Authz
+* [x] Vault
+* [ ] TLS
+* [ ] ACL and Authz
