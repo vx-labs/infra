@@ -24,3 +24,4 @@ terraform apply
 * [x] Vault
 * [ ] TLS
 * [ ] ACL and Authz
+* [ ] HA LB
