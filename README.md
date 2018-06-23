@@ -25,3 +25,4 @@ terraform apply
 * [ ] TLS
 * [ ] ACL and Authz
 * [ ] HA LB
+* [ ] VPN private access
