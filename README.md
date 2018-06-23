@@ -18,3 +18,9 @@ vim secrets
 . ./secrets
 terraform apply
 ```
+
+## TODO
+
+[x] Vault
+[] TLS
+[] ACL and Authz
