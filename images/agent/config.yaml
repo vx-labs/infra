@@ -8,6 +8,12 @@ passwd:
 storage:
   files:
     - filesystem: "root"
+      path: "/var/lib/iptables/rules-save"
+      mode: 0644
+      contents:
+        remote:
+          url: "https://raw.githubusercontent.com/vx-labs/infra/master/images/agent/iptables.rules"
+    - filesystem: "root"
       path: "/opt/scaleway-coreos-custom-metadata"
       mode: 0750
       contents:
@@ -15,6 +21,8 @@ storage:
           url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.6/scaleway-coreos-custom-metadata"
 systemd:
   units:
+    - name: "iptables-restore.service"
+      enable: true
     - name: "coreos-metadata.service"
       dropins:
         - name: "use-script.conf"
