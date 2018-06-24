@@ -36,8 +36,9 @@ systemd:
             [Service]
             # Empty ExecStart= prevents the previously defined ExecStart from running
             ExecStart=
-            ExecStartPre=/opt/scaleway-coreos-custom-metadata
+            ExecStart=/opt/scaleway-coreos-custom-metadata
             ExecStart=/usr/bin/update-ssh-keys -u core
+            Restart=no
     - name: scw-signal-booted.service
       enabled: true
       contents: |
@@ -64,17 +65,15 @@ systemd:
         [Install]
         WantedBy=basic.target
     - name: vault-auth.service
-      enabled: true
       contents: |
         [Unit]
         Description=Generate vault configuration
         Requires=network-online.target coreos-metadata.service
         After=coreos-metadata.service
         [Service]
-        Restart=always
         EnvironmentFile=-/run/metadata/coreos
         ExecStart=/opt/vault-config-extractor --vault-addr-env-var COREOS_CUSTOM_TAG_VAULT_ADDR -r COREOS_CUSTOM_TAG_VAULT_ROLE_ID -s COREOS_CUSTOM_TAG_VAULT_SECRET_ID -o /etc/vault.env
-        Type=Oneshot
+        Type=oneshot
         [Install]
         WantedBy=basic.target
     - name: nomad-agent.service
@@ -82,8 +81,8 @@ systemd:
       contents: |
         [Unit]
         Description=Run nomad agent
-        Requires=network-online.target vault-token.service
-        After=vault-token.service
+        Requires=network-online.target vault-auth.service
+        After=vault-auth.service
         [Service]
         Restart=always
         EnvironmentFile=/run/metadata/coreos
