@@ -18,7 +18,13 @@ storage:
       mode: 0750
       contents:
         remote:
-          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.6/scaleway-coreos-custom-metadata"
+          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.7/scaleway-coreos-custom-metadata"
+    - filesystem: "root"
+      path: "/opt/vault-config-extractor"
+      mode: 0750
+      contents:
+        remote:
+          url: "https://github.com/vx-labs/vault-config-extractor/releases/download/v0.0.1/vault-config-extractor"
 systemd:
   units:
     - name: "iptables-restore.service"
@@ -57,17 +63,31 @@ systemd:
         ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
         [Install]
         WantedBy=basic.target
-    - name: nomad-agent.service
+    - name: vault-token.service
       enabled: true
       contents: |
         [Unit]
-        Description=Run nomad agent
+        Description=Generate vault configuration
         Requires=network-online.target coreos-metadata.service
         After=coreos-metadata.service
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --name nomad-agent  --net=host --privileged -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/nomad:/var/lib/nomad --rm jbonachera/nomad-agent agent -config=/etc/nomad  -servers servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net:4647
+        ExecStart=/opt/vault-config-extractor --vault-addr-env-var COREOS_CUSTOM_TAG_VAULT_ADDR --vault-wrapping-token-env-var COREOS_CUSTOM_TAG_VAULT_WRAPPING_TOKEN -o /etc/vault.env
+        [Install]
+        WantedBy=basic.target
+    - name: nomad-agent.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run nomad agent
+        Requires=network-online.target vault-token.service
+        After=vault-token.service
+        [Service]
+        Restart=always
+        EnvironmentFile=/run/metadata/coreos
+        EnvironmentFile=/etc/vault.env
+        ExecStart=/usr/bin/docker run --name nomad-agent  --net=host -e VAULT_ADDR={VAUTL_ADDR} -e VAULT_TOKEN=${VAULT_TOKEN} --privileged -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/nomad:/var/lib/nomad --rm jbonachera/nomad-agent agent -config=/etc/nomad  -servers servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net:4647
         [Install]
         WantedBy=basic.target
     - name: linkerd.service
