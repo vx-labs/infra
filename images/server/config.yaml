@@ -18,7 +18,7 @@ storage:
       mode: 0750
       contents:
         remote:
-          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.6/scaleway-coreos-custom-metadata"
+          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.7/scaleway-coreos-custom-metadata"
 systemd:
   units:
     - name: "iptables-restore.service"
@@ -30,8 +30,9 @@ systemd:
             [Service]
             # Empty ExecStart= prevents the previously defined ExecStart from running
             ExecStart=
-            ExecStartPre=/opt/scaleway-coreos-custom-metadata
+            ExecStart=/opt/scaleway-coreos-custom-metadata
             ExecStart=/usr/bin/update-ssh-keys -u core
+            Restart=no
     - name: scw-signal-booted.service
       enabled: true
       contents: |
@@ -54,7 +55,8 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -server -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net -bootstrap-expect=3
+        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -server -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net -bootstrap-expect=${COREOS_CUSTOM_TAG_CLUSTER_SIZE}
+        ExecStop=/usr/bin/docker stop consul
         [Install]
         WantedBy=basic.target
     - name: vault.service
@@ -62,12 +64,13 @@ systemd:
       contents: |
         [Unit]
         Description=Run vault server
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
+        Requires=network-online.target consul.service
+        After=consul.service
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name vault --net=host --cap-add=IPC_LOCK -e 'VAULT_LOCAL_CONFIG={"listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": true}}, "backend": {"consul": {}}, "default_lease_ttl": "168h", "max_lease_ttl": "720h"}' vault server
+        ExecStart=/usr/bin/docker run --rm --name vault --net=host --cap-add=IPC_LOCK -e 'VAULT_LOCAL_CONFIG={"listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": true}}, "backend": {"consul": {}}, "default_lease_ttl": "168h", "max_lease_ttl": "720h"}' vault server -vault-enabled
+        ExecStop=/usr/bin/docker stop consul
         [Install]
         WantedBy=basic.target
 
@@ -76,12 +79,16 @@ systemd:
       contents: |
         [Unit]
         Description=Run nomad server
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
+        Requires=network-online.target consul.service
+        After=consul.service
         [Service]
-        Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name nomad-server -v /var/lib/nomad:/var/lib/nomad --net=host jbonachera/nomad agent -config=/etc/nomad -server -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net -bootstrap-expect=3
+        ExecStartPre=/usr/bin/docker pull quay.io/vxlabs/nomad-remove-local-peer
+        ExecStart=/usr/bin/docker     run --rm --name nomad-server -v /var/lib/nomad:/var/lib/nomad --net=host jbonachera/nomad agent -config=/etc/nomad -server -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net -bootstrap-expect=${COREOS_CUSTOM_TAG_CLUSTER_SIZE}
+        ExecStartPost=/usr/bin/docker run  --net=host --rm quay.io/vxlabs/nomad-remove-local-peer clean-server
+        ExecStop=/usr/bin/docker      run  --net=host --rm quay.io/vxlabs/nomad-remove-local-peer server -c ${COREOS_CUSTOM_TAG_CLUSTER_SIZE}
+        ExecStop=/usr/bin/docker stop nomad-server
+        TimeoutStopSec=3600
         [Install]
         WantedBy=basic.target
 
