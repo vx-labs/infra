@@ -17,14 +17,6 @@ resource "scaleway_server" "nomad-server" {
   tags  = [
     "CLUSTER_SIZE=${var.master_count}",
   ]
-  provisioner "local-exec" {
-    command = "docker run --rm quay.io/vxlabs/nomad-remove-local-peer server"
-    when = "destroy"
-    environment = {
-      NOMAD_ADDR="http://${self.public_ip}:4646"
-      CONSUL_HTTP_ADDR="${self.public_ip}:8500"
-    }
-  }
 }
 
 resource "scaleway_security_group" "nomad_server" {
