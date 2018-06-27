@@ -8,13 +8,21 @@ passwd:
 storage:
   files:
     - filesystem: "root"
+      path: "/var/lib/iptables/rules-save"
+      mode: 0644
+      contents:
+        remote:
+          url: "https://raw.githubusercontent.com/vx-labs/infra/master/images/coordinator/iptables.rules"
+    - filesystem: "root"
       path: "/opt/scaleway-coreos-custom-metadata"
       mode: 0750
       contents:
         remote:
-          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.6/scaleway-coreos-custom-metadata"
+          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.7/scaleway-coreos-custom-metadata"
 systemd:
   units:
+    - name: "iptables-restore.service"
+      enable: true
     - name: "coreos-metadata.service"
       dropins:
         - name: "use-script.conf"
@@ -22,8 +30,9 @@ systemd:
             [Service]
             # Empty ExecStart= prevents the previously defined ExecStart from running
             ExecStart=
-            ExecStartPre=/opt/scaleway-coreos-custom-metadata
+            ExecStart=/opt/scaleway-coreos-custom-metadata
             ExecStart=/usr/bin/update-ssh-keys -u core
+            Restart=no
     - name: scw-signal-booted.service
       enabled: true
       contents: |
@@ -36,30 +45,32 @@ systemd:
         ExecStart=/usr/bin/curl -s --fail -XPATCH -H 'Content-Type: application/json' http://169.254.42.42/state -d '{"state_detail": "booted"}' -o /dev/null
         [Install]
         WantedBy=basic.target
-    - name: consul-agent.service
+    - name: consul.service
       enabled: true
       contents: |
         [Unit]
-        Description=Consul agent
+        Description=Consul server
         Requires=network-online.target coreos-metadata.service
         After=coreos-metadata.service
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -retry-join=servers.consul.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
+        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -server -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net -bootstrap-expect=${COREOS_CUSTOM_TAG_CLUSTER_SIZE}
+        ExecStop=/usr/bin/docker stop consul
         [Install]
         WantedBy=basic.target
-    - name: fabio.service
+    - name: vault.service
       enabled: true
       contents: |
         [Unit]
-        Description=Run fabio LB agent
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
+        Description=Run vault server
+        Requires=network-online.target consul.service
+        After=consul.service
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name fabio --net=host fabiolb/fabio:1.5.9-go1.10.2 /fabio -cfg /etc/fabio/fabio.properties -proxy.addr ':1883;proto=tcp,:8883;proto=tcp,:80;proto=http,:443;proto=tcp+sni'
+        ExecStart=/usr/bin/docker run --rm --name vault --net=host --cap-add=IPC_LOCK -e 'VAULT_LOCAL_CONFIG={"listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": true}}, "backend": {"consul": {}}, "default_lease_ttl": "168h", "max_lease_ttl": "720h"}' vault server
+        ExecStop=/usr/bin/docker stop vault
         [Install]
         WantedBy=basic.target
 

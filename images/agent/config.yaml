@@ -61,7 +61,7 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
+        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=servers.consul.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
         [Install]
         WantedBy=basic.target
     - name: vault-auth.service
@@ -87,7 +87,7 @@ systemd:
         Restart=always
         EnvironmentFile=/run/metadata/coreos
         EnvironmentFile=/etc/vault.env
-        ExecStart=/usr/bin/docker run --name nomad-agent  --net=host -e VAULT_ADDR={VAUTL_ADDR} -e VAULT_TOKEN=${VAULT_TOKEN} --privileged -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/nomad:/var/lib/nomad --rm jbonachera/nomad-agent agent -config=/etc/nomad  -servers servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net:4647
+        ExecStart=/usr/bin/docker run --name nomad-agent  --net=host -e VAULT_ADDR={VAULT_ADDR} -e VAULT_TOKEN=${VAULT_TOKEN} --privileged -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/nomad:/var/lib/nomad --rm jbonachera/nomad-agent agent -config=/etc/nomad  -servers servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net:4647 -vault-enabled -vault-address=${VAULT_ADDR}
         [Install]
         WantedBy=basic.target
     - name: linkerd.service

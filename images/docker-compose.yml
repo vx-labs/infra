@@ -1,13 +1,22 @@
 version: '3'
 services:
-  server:
+  master:
     image: jbonachera/scaleway-coreos
     environment:
       - SCW_API_ACCESS_KEY=${api_access_key}
       - SCW_API_TOKEN=${api_token}
     volumes:
-      - ./server/config.yaml:/usr/local/src/app/config.yaml
-      - ./server/secrets.json:/srv/secrets.json
+      - ./master/config.yaml:/usr/local/src/app/config.yaml
+      - ./master/secrets.json:/srv/secrets.json
+      - ${HOME}/.scwrc:/root/.scwrc
+  coordinator:
+    image: jbonachera/scaleway-coreos
+    environment:
+      - SCW_API_ACCESS_KEY=${api_access_key}
+      - SCW_API_TOKEN=${api_token}
+    volumes:
+      - ./coordinator/config.yaml:/usr/local/src/app/config.yaml
+      - ./coordinator/secrets.json:/srv/secrets.json
       - ${HOME}/.scwrc:/root/.scwrc
   agent:
     image: jbonachera/scaleway-coreos

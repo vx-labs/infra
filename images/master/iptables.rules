@@ -8,6 +8,5 @@
 -A INPUT -i eth0 -s 10.0.0.0/8 -j ACCEPT
 -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
 -A INPUT -p tcp -m tcp --dport 4646 -j ACCEPT
--A INPUT -p tcp -m tcp --dport 8200 -j ACCEPT
 -A INPUT -j DROP
 COMMIT
