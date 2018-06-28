@@ -18,7 +18,7 @@ storage:
       mode: 0750
       contents:
         remote:
-          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.7/scaleway-coreos-custom-metadata"
+          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.8/scaleway-coreos-custom-metadata"
 systemd:
   units:
     - name: "iptables-restore.service"
@@ -55,7 +55,7 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -server -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net -bootstrap-expect=${COREOS_CUSTOM_TAG_CLUSTER_SIZE}
+        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -server -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -retry-join=${COREOS_CUSTOM_TAG_JOIN_LIST} -bootstrap-expect=${COREOS_CUSTOM_TAG_CLUSTER_SIZE}
         ExecStop=/usr/bin/docker stop consul
         [Install]
         WantedBy=basic.target
