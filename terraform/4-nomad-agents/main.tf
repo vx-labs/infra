@@ -6,6 +6,9 @@ data "scaleway_image" "agent" {
 }
 
 resource "random_id" "secret_id" {
+  lifecycle {
+    create_before_destroy = true
+  }
   count = "${var.agent_count}"
   keepers = {
     ami_id = "${data.scaleway_image.agent.id}"
@@ -19,6 +22,9 @@ data "vault_approle_auth_backend_role_id" "role" {
 }
 
 resource "scaleway_server" "nomad-agent" {
+  lifecycle {
+    create_before_destroy = true
+  }
   count = "${var.agent_count}"
   name  = "nomad-agent-${element(random_id.secret_id.*.hex, count.index)}"
   image = "${data.scaleway_image.agent.id}"
@@ -35,12 +41,12 @@ resource "scaleway_server" "nomad-agent" {
 }
 
 resource "vault_approle_auth_backend_role_secret_id" "id" {
+  lifecycle {
+    create_before_destroy = true
+  }
   count     = "${var.agent_count}"
   backend   = "approle"
   role_name = "nomad-role"
-  lifecycle {
-    ignore_changes = ["*"]
-  }
   metadata  = <<EOT
 {
   "server_id": "nomad-agent-${element(random_id.secret_id.*.hex, count.index)}"

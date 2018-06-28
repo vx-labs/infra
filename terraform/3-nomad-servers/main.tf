@@ -1,22 +1,37 @@
-data "scaleway_image" "server" {
+provider "vault" {}
+
+data "scaleway_image" "masters" {
+  count = "${length(var.master_images)}"
   architecture = "x86_64"
-  name         = "coreos-nomad-server"
+  name         = "${element(var.master_images, count.index)}"
 }
-resource "scaleway_server" "nomad-server" {
-  lifecycle {
-    create_before_destroy = true
-  }
-  name  = "nomad-server"
-  image = "${data.scaleway_image.server.id}"
+
+data "vault_approle_auth_backend_role_id" "role" {
+  backend   = "approle"
+  role_name = "nomad-role"
+}
+
+resource "scaleway_server" "nomad-masters" {
+  count = "${length(var.master_images)}"
+  name  = "nomad-master-${count.index}"
+  image = "${element(data.scaleway_image.masters.*.id, count.index)}"
   dynamic_ip_required = true
   enable_ipv6 = false
   type  = "START1-XS"
-  count = "${var.master_count}"
   boot_type = "local"
   security_group = "${scaleway_security_group.nomad_server.id}"
   tags  = [
-    "CLUSTER_SIZE=${var.master_count}",
+    "CLUSTER_SIZE=${length(var.master_images)}",
+    "VAULT_ROLE_ID=${data.vault_approle_auth_backend_role_id.role.role_id}",
+    "VAULT_SECRET_ID=${element(vault_approle_auth_backend_role_secret_id.masters.*.secret_id, count.index)}",
+    "VAULT_ADDR=http://servers.vault.discovery.${var.region}.${var.cloudflare_domain}:8200"
   ]
+}
+
+resource "vault_approle_auth_backend_role_secret_id" "masters" {
+  count = "${length(var.master_images)}"
+  backend   = "approle"
+  role_name = "nomad-role"
 }
 
 resource "scaleway_security_group" "nomad_server" {
@@ -62,7 +77,4 @@ resource "scaleway_security_group_rule" "drop_all_nomad" {
   ip_range  = "0.0.0.0/0"
   protocol  = "TCP"
   port = 4646
-}
-output "cluster" {
-value = "${join("\n",scaleway_server.nomad-server.*.public_ip)}"
 }
