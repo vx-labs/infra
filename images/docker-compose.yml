@@ -8,7 +8,6 @@ services:
     volumes:
       - ./master/config.yaml:/usr/local/src/app/config.yaml
       - ./master/secrets.json:/srv/secrets.json
-      - ${HOME}/.scwrc:/root/.scwrc
   coordinator:
     image: jbonachera/scaleway-coreos
     environment:
@@ -17,7 +16,6 @@ services:
     volumes:
       - ./coordinator/config.yaml:/usr/local/src/app/config.yaml
       - ./coordinator/secrets.json:/srv/secrets.json
-      - ${HOME}/.scwrc:/root/.scwrc
   agent:
     image: jbonachera/scaleway-coreos
     environment:
@@ -26,7 +24,6 @@ services:
     volumes:
       - ./agent/config.yaml:/usr/local/src/app/config.yaml
       - ./agent/secrets.json:/srv/secrets.json
-      - ${HOME}/.scwrc:/root/.scwrc
   lb:
     image: jbonachera/scaleway-coreos
     environment:
