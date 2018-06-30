@@ -12,9 +12,6 @@ resource "scaleway_server" "coordinators" {
   type  = "START1-XS"
   boot_type = "local"
   security_group = "${scaleway_security_group.coordinators.id}"
-  tags  = [
-    "CLUSTER_SIZE=3",
-  ]
 }
 
 resource "scaleway_security_group" "coordinators" {
@@ -41,3 +38,25 @@ resource "scaleway_security_group_rule" "drop_all_ssh" {
   protocol  = "TCP"
   port = 22
 }
+
+resource "scaleway_user_data" "count" {
+  count = "${length(var.coordinator_images)}"
+  server = "${element(scaleway_server.coordinators.*.id, count.index)}"
+  key = "COUNT"
+  value = "3"
+}
+
+resource "scaleway_user_data" "consul_join_list" {
+  count = "${length(var.coordinator_images)}"
+  server = "${element(scaleway_server.coordinators.*.id, count.index)}"
+  key = "CONSUL_JOIN_LIST"
+  value = "${scaleway_server.coordinators.0.private_ip}"
+}
+
+resource "scaleway_user_data" "consul_cluster_size" {
+  count = "${length(var.coordinator_images)}"
+  server = "${element(scaleway_server.coordinators.*.id, count.index)}"
+  key = "CONSUL_CLUSTER_SIZE"
+  value = "${length(var.coordinator_images)}"
+}
+

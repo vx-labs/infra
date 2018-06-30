@@ -14,7 +14,7 @@ resource "cloudflare_record" "vault-discovery" {
   type   = "A"
   ttl    = 1
 }
-resource "cloudflare_record" "coordinators" {
+resource "cloudflare_record" "consuls" {
   count = "${length(var.coordinator_images)}"
   domain = "${var.cloudflare_domain}"
   name   = "servers.consul.${var.region}"
@@ -23,6 +23,14 @@ resource "cloudflare_record" "coordinators" {
   ttl    = 1
 }
 
+resource "cloudflare_record" "vaults" {
+  count = "${length(var.coordinator_images)}"
+  domain = "${var.cloudflare_domain}"
+  name   = "servers.vault.${var.region}"
+  value  = "${element(scaleway_server.coordinators.*.public_ip, count.index)}"
+  type   = "A"
+  ttl    = 1
+}
 resource "cloudflare_record" "coordinator_direct" {
   count = "${length(var.coordinator_images)}"
   domain = "${var.cloudflare_domain}"
