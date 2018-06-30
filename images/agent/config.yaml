@@ -86,7 +86,7 @@ systemd:
           -v /tmp:/tmp \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v /var/lib/nomad:/var/lib/nomad \
-          --net=host jbonachera/nomad \
+          --net=host jbonachera/nomad-agent \
             agent -config=/etc/nomad -client \
             -consul-client-auto-join  \
             -consul-auto-advertise \
