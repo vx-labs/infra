@@ -24,3 +24,10 @@ path "secret/data/mqtt/tls/broker.iot.cloud.vx-labs.net/private_key" {
 path "secret/data/mqtt/tls/broker.iot.cloud.vx-labs.net/certificate" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
+
+
+path "secret/data/vx/cloudflare" {
+  capabilities = ["read"]
+}
+
+
