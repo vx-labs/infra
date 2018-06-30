@@ -1,6 +1,6 @@
 data "scaleway_image" "lb" {
   architecture = "x86_64"
-  name         = "coreos-nomad-lb"
+  name         = "${element(var.lb_images, 0)}"
 }
 resource "scaleway_server" "nomad-lb" {
   name  = "nomad-lb"
