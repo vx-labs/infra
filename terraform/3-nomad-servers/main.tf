@@ -1,69 +1,30 @@
 provider "vault" {}
-
-data "scaleway_image" "masters" {
-  count = "${length(var.master_images)}"
-  architecture = "x86_64"
-  name         = "${element(var.master_images, count.index)}"
+module "server-1" {
+  source = "./modules/nomad-master"
+  image = "${element(var.master_images, 1)}"
+  secgroup = "${scaleway_security_group.nomad_server.id}"
+  index = "1"
+  expect_count = "${length(var.master_images)}"
+  region = "${var.region}"
+  domain = "${var.cloudflare_domain}"
 }
-
-data "vault_approle_auth_backend_role_id" "role" {
-  backend   = "approle"
-  role_name = "nomad-role"
+module "server-2" {
+  source = "./modules/nomad-master"
+  image = "${element(var.master_images, 2)}"
+  secgroup = "${scaleway_security_group.nomad_server.id}"
+  index = "2"
+  expect_count = "${length(var.master_images)}"
+  region = "${var.region}"
+  domain = "${var.cloudflare_domain}"
 }
-
-resource "scaleway_server" "nomad-masters" {
-  count = "${length(var.master_images)}"
-  name  = "nomad-master-${count.index}"
-  image = "${element(data.scaleway_image.masters.*.id, count.index)}"
-  dynamic_ip_required = true
-  enable_ipv6 = false
-  type  = "START1-XS"
-  boot_type = "local"
-  security_group = "${scaleway_security_group.nomad_server.id}"
-  tags  = [
-    "CLUSTER_SIZE=${length(var.master_images)}",
-  ]
-}
-
-resource "scaleway_user_data" "count" {
-  count = "${length(var.master_images)}"
-  server = "${element(scaleway_server.nomad-masters.*.id, count.index)}"
-  key = "COUNT"
-  value = "4"
-}
-
-resource "scaleway_user_data" "vault_addr" {
-  count = "${length(var.master_images)}"
-  server = "${element(scaleway_server.nomad-masters.*.id, count.index)}"
-  key = "VAULT_ADDR"
-  value = "http://servers.vault.discovery.${var.region}.${var.cloudflare_domain}:8200"
-}
-
-resource "scaleway_user_data" "vault_role" {
-  count = "${length(var.master_images)}"
-  server = "${element(scaleway_server.nomad-masters.*.id, count.index)}"
-  key = "VAULT_ROLE_ID"
-  value = "${data.vault_approle_auth_backend_role_id.role.role_id}"
-}
-
-resource "scaleway_user_data" "vault_secret" {
-  count = "${length(var.master_images)}"
-  server = "${element(scaleway_server.nomad-masters.*.id, count.index)}"
-  key = "VAULT_SECRET_ID"
-  value = "${element(vault_approle_auth_backend_role_secret_id.masters.*.secret_id, count.index)}"
-}
-resource "scaleway_user_data" "vault_token_role" {
-  count = "${length(var.master_images)}"
-  server = "${element(scaleway_server.nomad-masters.*.id, count.index)}"
-  key = "VAULT_TOKEN_ROLE"
-  value = "nomad-cluster"
-}
-
-resource "vault_approle_auth_backend_role_secret_id" "masters" {
-  count = "${length(var.master_images)}"
-  backend   = "approle"
-  role_name = "nomad-role"
-  cidr_list  = ["${element(scaleway_server.nomad-masters.*.private_ip, count.index)}/32"]
+module "server-3" {
+  source = "./modules/nomad-master"
+  image = "${element(var.master_images, 3)}"
+  secgroup = "${scaleway_security_group.nomad_server.id}"
+  index = "3"
+  expect_count = "${length(var.master_images)}"
+  region = "${var.region}"
+  domain = "${var.cloudflare_domain}"
 }
 
 resource "scaleway_security_group" "nomad_server" {
