@@ -22,16 +22,48 @@ resource "scaleway_server" "nomad-masters" {
   security_group = "${scaleway_security_group.nomad_server.id}"
   tags  = [
     "CLUSTER_SIZE=${length(var.master_images)}",
-    "VAULT_ROLE_ID=${data.vault_approle_auth_backend_role_id.role.role_id}",
-    "VAULT_SECRET_ID=${element(vault_approle_auth_backend_role_secret_id.masters.*.secret_id, count.index)}",
-    "VAULT_ADDR=http://servers.vault.discovery.${var.region}.${var.cloudflare_domain}:8200"
   ]
+}
+
+resource "scaleway_user_data" "count" {
+  count = "${length(var.master_images)}"
+  server = "${element(scaleway_server.nomad-masters.*.id, count.index)}"
+  key = "COUNT"
+  value = "4"
+}
+
+resource "scaleway_user_data" "vault_addr" {
+  count = "${length(var.master_images)}"
+  server = "${element(scaleway_server.nomad-masters.*.id, count.index)}"
+  key = "VAULT_ADDR"
+  value = "http://servers.vault.discovery.${var.region}.${var.cloudflare_domain}:8200"
+}
+
+resource "scaleway_user_data" "vault_role" {
+  count = "${length(var.master_images)}"
+  server = "${element(scaleway_server.nomad-masters.*.id, count.index)}"
+  key = "VAULT_ROLE_ID"
+  value = "${data.vault_approle_auth_backend_role_id.role.role_id}"
+}
+
+resource "scaleway_user_data" "vault_secret" {
+  count = "${length(var.master_images)}"
+  server = "${element(scaleway_server.nomad-masters.*.id, count.index)}"
+  key = "VAULT_SECRET_ID"
+  value = "${element(vault_approle_auth_backend_role_secret_id.masters.*.secret_id, count.index)}"
+}
+resource "scaleway_user_data" "vault_token_role" {
+  count = "${length(var.master_images)}"
+  server = "${element(scaleway_server.nomad-masters.*.id, count.index)}"
+  key = "VAULT_TOKEN_ROLE"
+  value = "nomad-cluster"
 }
 
 resource "vault_approle_auth_backend_role_secret_id" "masters" {
   count = "${length(var.master_images)}"
   backend   = "approle"
   role_name = "nomad-role"
+  cidr_list  = ["${element(scaleway_server.nomad-masters.*.private_ip, count.index)}/32"]
 }
 
 resource "scaleway_security_group" "nomad_server" {
