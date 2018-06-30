@@ -24,7 +24,7 @@ storage:
       mode: 0750
       contents:
         remote:
-          url: "https://github.com/vx-labs/vault-config-extractor/releases/download/v0.0.2/vault-config-extractor"
+          url: "https://github.com/vx-labs/vault-config-extractor/releases/download/v0.0.3/vault-config-extractor"
 systemd:
   units:
     - name: "iptables-restore.service"
@@ -68,7 +68,6 @@ systemd:
         EnvironmentFile=/etc/userdata.env
         ExecStart=/opt/vault-config-extractor --vault-addr-env-var VAULT_ADDR -r VAULT_ROLE_ID -s VAULT_SECRET_ID -o /etc/vault.env
         Type=oneshot
-        Restart=no
         [Install]
         WantedBy=basic.target
     - name: nomad.service
@@ -89,7 +88,7 @@ systemd:
             agent -config=/etc/nomad -server \
             -consul-server-auto-join  \
             -consul-auto-advertise \
-            -bootstrap-expect=${COREOS_CUSTOM_TAG_CLUSTER_SIZE} \
+            -bootstrap-expect=${CLUSTER_SIZE} \
             -vault-enabled \
             -vault-address=${VAULT_ADDR} \
             -vault-create-from-role=${VAULT_TOKEN_ROLE}
