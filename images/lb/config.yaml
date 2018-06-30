@@ -12,32 +12,27 @@ storage:
       mode: 0750
       contents:
         remote:
-          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.6/scaleway-coreos-custom-metadata"
+          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.12/scaleway-coreos-custom-metadata"
 systemd:
   units:
+    - name: "iptables-restore.service"
+      enabled: true
     - name: "coreos-metadata.service"
       dropins:
         - name: "use-script.conf"
           contents: |
             [Service]
-            # Empty ExecStart= prevents the previously defined ExecStart from running
             ExecStart=
-            ExecStartPre=/opt/scaleway-coreos-custom-metadata
-            ExecStart=/usr/bin/update-ssh-keys -u core
-    - name: scw-signal-booted.service
+            ExecStart=/opt/scaleway-coreos-custom-metadata
+    - name: "coreos-metadata-sshkeys@.service"
       enabled: true
-      contents: |
-        [Unit]
-        Description=Signal successful boot to Scaleway control plane
-        Requires=network-online.target coreos-metadata.service
-        After=network.target network-online.target coreos-metadata.service
-        [Service]
-        Type=oneshot
-        ExecStart=/usr/bin/curl -s --fail -XPATCH -H 'Content-Type: application/json' http://169.254.42.42/state -d '{"state_detail": "booted"}' -o /dev/null
-        [Install]
-        WantedBy=basic.target
+      dropins:
+        - name: "use-script.conf"
+          contents: |
+            [Service]
+            ExecStart=
+            ExecStart=/opt/scaleway-coreos-custom-metadata ssh-keys %i
     - name: consul-agent.service
-      enabled: true
       contents: |
         [Unit]
         Description=Consul agent
@@ -46,7 +41,8 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -retry-join=servers.consul.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
+        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=servers.consul.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
+        ExecStop=/usr/bin/docker stop consul
         [Install]
         WantedBy=basic.target
     - name: fabio.service
