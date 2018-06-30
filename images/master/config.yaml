@@ -18,7 +18,7 @@ storage:
       mode: 0750
       contents:
         remote:
-          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.11/scaleway-coreos-custom-metadata"
+          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.12/scaleway-coreos-custom-metadata"
     - filesystem: "root"
       path: "/opt/vault-config-extractor"
       mode: 0750
@@ -82,7 +82,17 @@ systemd:
         EnvironmentFile=/run/metadata/coreos
         EnvironmentFile=/etc/vault.env
         EnvironmentFile=/etc/userdata.env
-        ExecStart=/usr/bin/docker  run --rm --name nomad-server -e VAULT_TOKEN=${VAULT_TOKEN} -v /var/lib/nomad:/var/lib/nomad --net=host jbonachera/nomad agent -config=/etc/nomad -server -retry-join=servers.nomad.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net -bootstrap-expect=${COREOS_CUSTOM_TAG_CLUSTER_SIZE} -vault-enabled -vault-address=${VAULT_ADDR} -vault-create-from-role=${VAULT_TOKEN_ROLE}
+        ExecStart=/usr/bin/docker  run --rm --name nomad-server \
+          -e VAULT_TOKEN=${VAULT_TOKEN} \
+          -v /var/lib/nomad:/var/lib/nomad \
+          --net=host jbonachera/nomad \
+            agent -config=/etc/nomad -server \
+            -consul-server-auto-join  \
+            -consul-auto-advertise \
+            -bootstrap-expect=${COREOS_CUSTOM_TAG_CLUSTER_SIZE} \
+            -vault-enabled \
+            -vault-address=${VAULT_ADDR} \
+            -vault-create-from-role=${VAULT_TOKEN_ROLE}
         ExecStop=/usr/bin/docker stop nomad-server
         [Install]
         WantedBy=basic.target
