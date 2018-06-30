@@ -24,3 +24,13 @@ resource "vault_approle_auth_backend_role" "nomad-agent" {
   policies  = ["default", "nomad-server"]
   period    = 600
 }
+
+resource "vault_generic_secret" "vx-cloudflare" {
+  path      = "/secret/data/vx/cloudflare"
+  data_json = <<EOT
+{
+  "email": "${var.cloudflare_email}",
+  "api_token": "${var.cloudflare_token}"
+}
+EOT
+}
