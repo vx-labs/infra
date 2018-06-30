@@ -11,7 +11,6 @@ resource "vault_policy" "nomad-tls-storer" {
 resource "vault_generic_secret" "nomad-token-role" {
   path      = "/auth/token/roles/nomad-cluster"
   data_json = "${file("nomad-cluster-role.json")}"
-  disable_read = true
 }
 resource "vault_auth_backend" "approle" {
   type = "approle"
