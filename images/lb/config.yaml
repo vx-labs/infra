@@ -50,8 +50,8 @@ systemd:
       contents: |
         [Unit]
         Description=Run fabio LB agent
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
+        Requires=network-online.target consul-agent.service
+        After=consul-agent.service
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
