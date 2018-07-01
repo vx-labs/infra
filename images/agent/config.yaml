@@ -85,7 +85,7 @@ systemd:
           -e VAULT_TOKEN=${VAULT_TOKEN} \
           -v /tmp:/tmp \
           -v /var/run/docker.sock:/var/run/docker.sock \
-          -v /var/lib/nomad:/var/lib/nomad \
+          --mount type=bind,source=/var/lib/nomad,destination=/var/lib/nomad,bind-propagation=shared \
           --net=host jbonachera/nomad-agent \
             agent -config=/etc/nomad -client \
             -consul-client-auto-join  \
