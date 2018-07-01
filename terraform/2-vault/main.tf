@@ -8,6 +8,10 @@ resource "vault_policy" "nomad-tls-storer" {
   name = "nomad-tls-storer"
   policy = "${file("nomad-tls-storer-policy.hcl")}"
 }
+resource "vault_policy" "nomad-authenticator" {
+  name = "nomad-authenticator"
+  policy = "${file("nomad-authenticator-policy.hcl")}"
+}
 resource "vault_generic_secret" "nomad-token-role" {
   path      = "/auth/token/roles/nomad-cluster"
   data_json = "${file("nomad-cluster-role.json")}"
@@ -34,3 +38,4 @@ resource "vault_generic_secret" "vx-cloudflare" {
 }
 EOT
 }
+
