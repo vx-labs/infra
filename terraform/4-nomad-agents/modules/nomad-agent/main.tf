@@ -3,6 +3,9 @@ variable "domain" {}
 variable "image" {}
 variable "index" {}
 variable "secgroup" {}
+variable "type" {
+  default = "START1-XS"
+}
 
 data "scaleway_image" "master" {
   architecture = "x86_64"
@@ -19,7 +22,7 @@ resource "scaleway_server" "nomad-agents" {
   image = "${data.scaleway_image.master.id}"
   dynamic_ip_required = true
   enable_ipv6 = false
-  type  = "START1-XS"
+  type  = "${var.type}"
   boot_type = "local"
   security_group = "${var.secgroup}"
 }
