@@ -6,6 +6,10 @@ variable "secgroup" {}
 variable "type" {
   default = "START1-XS"
 }
+variable "public_ip" {
+  default = true
+}
+
 
 data "scaleway_image" "master" {
   architecture = "x86_64"
@@ -20,7 +24,7 @@ data "vault_approle_auth_backend_role_id" "role" {
 resource "scaleway_server" "nomad-agents" {
   name  = "nomad-agent-${var.index}"
   image = "${data.scaleway_image.master.id}"
-  dynamic_ip_required = true
+  dynamic_ip_required = "${var.public_ip}"
   enable_ipv6 = false
   type  = "${var.type}"
   boot_type = "local"
@@ -30,8 +34,21 @@ resource "scaleway_server" "nomad-agents" {
 resource "scaleway_user_data" "count" {
   server = "${scaleway_server.nomad-agents.id}"
   key = "COUNT"
-  value = "5"
+  value = "7"
 }
+
+resource "scaleway_user_data" "http_proxy" {
+  server = "${scaleway_server.nomad-agents.id}"
+  key = "http_proxy"
+  value = "http://http.proxy.discovery.${var.region}.${var.domain}:3128"
+}
+
+resource "scaleway_user_data" "https_proxy" {
+  server = "${scaleway_server.nomad-agents.id}"
+  key = "https_proxy"
+  value = "http://http.proxy.discovery.${var.region}.${var.domain}:3128"
+}
+
 
 resource "scaleway_user_data" "vault_addr" {
   server = "${scaleway_server.nomad-agents.id}"

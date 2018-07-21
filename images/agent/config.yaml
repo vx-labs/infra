@@ -52,12 +52,13 @@ systemd:
         [Service]
         EnvironmentFile=/run/metadata/coreos
         EnvironmentFile=/etc/userdata.env
-        ExecStart=/usr/bin/docker run --rm --name vault-auth quay.io/vxlabs/ \
+        ExecStart=/usr/bin/touch /etc/vault.env
+        ExecStart=/usr/bin/docker run --rm --name vault-auth \
           -v /etc/vault.env:/etc/vault.env \
-          -e VAULT_ADDR=$VAULT_ADDR \
-          -e VAULT_ROLE_ID=$VAULT_ROLE_ID \
-          -e VAULT_SECRET_ID=$VAULT_SECRET_ID \
-          vault-config-extractor \
+          -e VAULT_ADDR=${VAULT_ADDR} \
+          -e VAULT_ROLE_ID=${VAULT_ROLE_ID} \
+          -e VAULT_SECRET_ID=${VAULT_SECRET_ID} \
+          quay.io/vxlabs/vault-config-extractor \
             --vault-addr-env-var VAULT_ADDR -r VAULT_ROLE_ID -s VAULT_SECRET_ID -o /etc/vault.env
         Type=oneshot
         [Install]
@@ -73,6 +74,7 @@ systemd:
         EnvironmentFile=/run/metadata/coreos
         EnvironmentFile=/etc/vault.env
         EnvironmentFile=/etc/userdata.env
+        ExecStartPre=/usr/bin/mkdir -p /var/lib/nomad
         ExecStart=/usr/bin/docker  run --rm --privileged --name nomad-agent \
           -e VAULT_TOKEN=${VAULT_TOKEN} \
           -v /tmp:/tmp \
