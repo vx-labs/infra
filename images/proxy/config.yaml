@@ -29,7 +29,7 @@ systemd:
           contents: |
             [Service]
             ExecStart=
-            ExecStart=/opt/scaleway-coreos-custom-metadata
+            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata
     - name: "coreos-metadata-sshkeys@.service"
       enabled: true
       dropins:
@@ -37,7 +37,7 @@ systemd:
           contents: |
             [Service]
             ExecStart=
-            ExecStart=/opt/scaleway-coreos-custom-metadata ssh-keys %i
+            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata ssh-keys %i
     - name: squid.service
       enabled: true
       contents: |
