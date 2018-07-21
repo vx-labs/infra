@@ -9,6 +9,11 @@ resource "consul_key_prefix" "mqtt_config" {
   path_prefix = "mqtt/conf/"
 
   subkeys = {
+    "http"     = <<EOT
+{
+"proxy": "http://http.proxy.discovery.${var.region}.${var.cloudflare_domain}:3128"
+}
+EOT
     "tls"     = <<EOT
 {
 "cn": "broker.iot.cloud.${var.cloudflare_domain}",

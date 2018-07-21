@@ -4,6 +4,10 @@ variable "image" {}
 variable "index" {}
 variable "secgroup" {}
 variable "expect_count" {}
+variable "public_ip" {
+  default = true
+}
+
 
 data "scaleway_image" "master" {
   architecture = "x86_64"
@@ -18,7 +22,7 @@ data "vault_approle_auth_backend_role_id" "role" {
 resource "scaleway_server" "nomad-masters" {
   name  = "nomad-master-${var.index}"
   image = "${data.scaleway_image.master.id}"
-  dynamic_ip_required = true
+  dynamic_ip_required = "${var.public_ip}"
   enable_ipv6 = false
   type  = "START1-XS"
   boot_type = "local"
@@ -28,8 +32,21 @@ resource "scaleway_server" "nomad-masters" {
 resource "scaleway_user_data" "count" {
   server = "${scaleway_server.nomad-masters.id}"
   key = "COUNT"
-  value = "6"
+  value = "8"
 }
+
+resource "scaleway_user_data" "http_proxy" {
+  server = "${scaleway_server.nomad-masters.id}"
+  key = "http_proxy"
+  value = "http://http.proxy.discovery.${var.region}.${var.domain}:3128"
+}
+
+resource "scaleway_user_data" "https_proxy" {
+  server = "${scaleway_server.nomad-masters.id}"
+  key = "https_proxy"
+  value = "http://http.proxy.discovery.${var.region}.${var.domain}:3128"
+}
+
 
 resource "scaleway_user_data" "cluster_size" {
   server = "${scaleway_server.nomad-masters.id}"

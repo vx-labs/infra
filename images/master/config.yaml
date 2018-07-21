@@ -5,37 +5,23 @@ passwd:
       groups:
         - sudo
         - docker
-storage:
-  files:
-    - filesystem: "root"
-      path: "/var/lib/iptables/rules-save"
-      mode: 0644
-      contents:
-        remote:
-          url: "https://raw.githubusercontent.com/vx-labs/infra/master/images/master/iptables.rules"
-    - filesystem: "root"
-      path: "/opt/scaleway-coreos-custom-metadata"
-      mode: 0750
-      contents:
-        remote:
-          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.12/scaleway-coreos-custom-metadata"
-    - filesystem: "root"
-      path: "/opt/vault-config-extractor"
-      mode: 0750
-      contents:
-        remote:
-          url: "https://github.com/vx-labs/vault-config-extractor/releases/download/v0.0.3/vault-config-extractor"
 systemd:
   units:
-    - name: "iptables-restore.service"
-      enabled: true
+    - name: docker.service
+      dropins:
+        - name: 20-http-proxy.conf
+          contents: |
+            [Unit]
+            After=coreos-metadata.service
+            [Service]
+            EnvironmentFile=/etc/userdata.env
     - name: "coreos-metadata.service"
       dropins:
         - name: "use-script.conf"
           contents: |
             [Service]
             ExecStart=
-            ExecStart=/opt/scaleway-coreos-custom-metadata -c COUNT
+            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata -c COUNT
     - name: "coreos-metadata-sshkeys@.service"
       enabled: true
       dropins:
@@ -43,7 +29,7 @@ systemd:
           contents: |
             [Service]
             ExecStart=
-            ExecStart=/opt/scaleway-coreos-custom-metadata ssh-keys %i
+            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata ssh-keys %i
     - name: consul-agent.service
       contents: |
         [Unit]
@@ -66,7 +52,14 @@ systemd:
         [Service]
         EnvironmentFile=/run/metadata/coreos
         EnvironmentFile=/etc/userdata.env
-        ExecStart=/opt/vault-config-extractor --vault-addr-env-var VAULT_ADDR -r VAULT_ROLE_ID -s VAULT_SECRET_ID -o /etc/vault.env
+        ExecStart=/usr/bin/touch /etc/vault.env
+        ExecStart=/usr/bin/docker run --rm --name vault-auth \
+          -v /etc/vault.env:/etc/vault.env \
+          -e VAULT_ADDR=${VAULT_ADDR} \
+          -e VAULT_ROLE_ID=${VAULT_ROLE_ID} \
+          -e VAULT_SECRET_ID=${VAULT_SECRET_ID} \
+          quay.io/vxlabs/vault-config-extractor \
+            --vault-addr-env-var VAULT_ADDR -r VAULT_ROLE_ID -s VAULT_SECRET_ID -o /etc/vault.env
         Type=oneshot
         [Install]
         WantedBy=basic.target

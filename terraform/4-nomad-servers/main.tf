@@ -7,6 +7,7 @@ module "server-1" {
   expect_count = "${length(var.master_images)}"
   region = "${var.region}"
   domain = "${var.cloudflare_domain}"
+  public_ip = false
 }
 module "server-2" {
   source = "./modules/nomad-master"
@@ -16,6 +17,7 @@ module "server-2" {
   expect_count = "${length(var.master_images)}"
   region = "${var.region}"
   domain = "${var.cloudflare_domain}"
+  public_ip = false
 }
 module "server-3" {
   source = "./modules/nomad-master"
@@ -25,6 +27,7 @@ module "server-3" {
   expect_count = "${length(var.master_images)}"
   region = "${var.region}"
   domain = "${var.cloudflare_domain}"
+  public_ip = false
 }
 
 resource "scaleway_security_group" "nomad_server" {
@@ -32,42 +35,3 @@ resource "scaleway_security_group" "nomad_server" {
   description = "Nomad servers (masters)"
 }
 
-resource "scaleway_security_group_rule" "ssh_accept" {
-  security_group = "${scaleway_security_group.nomad_server.id}"
-
-  action    = "accept"
-  direction = "inbound"
-  ip_range  = "${var.management_ip}"
-  protocol  = "TCP"
-  port      = 22
-}
-resource "scaleway_security_group_rule" "nomad_accept" {
-  security_group = "${scaleway_security_group.nomad_server.id}"
-
-  action    = "accept"
-  direction = "inbound"
-  ip_range  = "${var.management_ip}"
-  protocol  = "TCP"
-  port      = 4646
-}
-
-resource "scaleway_security_group_rule" "drop_all_ssh" {
-  security_group = "${scaleway_security_group.nomad_server.id}"
-  depends_on = ["scaleway_security_group_rule.ssh_accept"]
-
-  action    = "drop"
-  direction = "inbound"
-  ip_range  = "0.0.0.0/0"
-  protocol  = "TCP"
-  port = 22
-}
-resource "scaleway_security_group_rule" "drop_all_nomad" {
-  security_group = "${scaleway_security_group.nomad_server.id}"
-  depends_on = ["scaleway_security_group_rule.nomad_accept"]
-
-  action    = "drop"
-  direction = "inbound"
-  ip_range  = "0.0.0.0/0"
-  protocol  = "TCP"
-  port = 4646
-}
