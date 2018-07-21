@@ -8,6 +8,12 @@ passwd:
 storage:
   files:
     - filesystem: "root"
+      path: "/var/lib/iptables/rules-save"
+      mode: 0644
+      contents:
+        remote:
+          url: "https://raw.githubusercontent.com/vx-labs/infra/master/images/proxy/iptables.rules"
+    - filesystem: "root"
       path: "/opt/scaleway-coreos-custom-metadata"
       mode: 0750
       contents:
