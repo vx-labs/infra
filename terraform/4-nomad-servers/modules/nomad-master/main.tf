@@ -90,10 +90,3 @@ resource "cloudflare_record" "masters_discovery" {
   type   = "A"
   ttl    = 1
 }
-resource "cloudflare_record" "nomad_servers_1" {
-  domain = "${var.domain}"
-  name   = "servers.nomad.${var.region}"
-  value  = "${scaleway_server.nomad-masters.public_ip}"
-  type   = "A"
-  ttl    = 1
-}

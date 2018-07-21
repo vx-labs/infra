@@ -79,3 +79,11 @@ resource "vault_approle_auth_backend_role_secret_id" "agents" {
   cidr_list  = ["${scaleway_server.nomad-agents.private_ip}/32"]
 }
 
+resource "cloudflare_record" "agents_discovery" {
+  domain = "${var.domain}"
+  name   = "agents.nomad.discovery.${var.region}"
+  value  = "${scaleway_server.nomad-agents.private_ip}"
+  type   = "A"
+  ttl    = 1
+}
+
