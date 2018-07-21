@@ -32,4 +32,11 @@ services:
     volumes:
       - ./lb/config.yaml:/usr/local/src/app/config.yaml
       - ./lb/secrets.json:/srv/secrets.json
-      - ${HOME}/.scwrc:/root/.scwrc
+  proxy:
+    image: jbonachera/scaleway-coreos
+    environment:
+      - SCW_API_ACCESS_KEY=${api_access_key}
+      - SCW_API_TOKEN=${api_token}
+    volumes:
+      - ./proxy/config.yaml:/usr/local/src/app/config.yaml
+      - ./proxy/secrets.json:/srv/secrets.json

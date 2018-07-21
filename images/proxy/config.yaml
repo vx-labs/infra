@@ -1,0 +1,47 @@
+---
+passwd:
+  users:
+    - name: core
+      groups:
+        - sudo
+        - docker
+storage:
+  files:
+    - filesystem: "root"
+      path: "/opt/scaleway-coreos-custom-metadata"
+      mode: 0750
+      contents:
+        remote:
+          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.12/scaleway-coreos-custom-metadata"
+systemd:
+  units:
+    - name: "iptables-restore.service"
+      enabled: true
+    - name: "coreos-metadata.service"
+      dropins:
+        - name: "use-script.conf"
+          contents: |
+            [Service]
+            ExecStart=
+            ExecStart=/opt/scaleway-coreos-custom-metadata
+    - name: "coreos-metadata-sshkeys@.service"
+      enabled: true
+      dropins:
+        - name: "use-script.conf"
+          contents: |
+            [Service]
+            ExecStart=
+            ExecStart=/opt/scaleway-coreos-custom-metadata ssh-keys %i
+    - name: squid.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Qquid HTTP proxy server
+        Requires=network-online.target
+        [Service]
+        Restart=always
+        EnvironmentFile=-/run/metadata/coreos
+        ExecStart=/usr/bin/docker run --rm --name tinyproxy -p 3128:3128 jbonachera/tinyproxy
+        [Install]
+        WantedBy=basic.target
+
