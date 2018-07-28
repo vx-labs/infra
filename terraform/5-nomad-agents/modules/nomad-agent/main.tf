@@ -53,7 +53,7 @@ resource "scaleway_user_data" "https_proxy" {
 resource "scaleway_user_data" "vault_addr" {
   server = "${scaleway_server.nomad-agents.id}"
   key = "VAULT_ADDR"
-  value = "http://servers.vault.discovery.${var.region}.${var.domain}:8200"
+  value = "http://127.0.0.1:8200"
 }
 
 resource "scaleway_user_data" "vault_role" {
