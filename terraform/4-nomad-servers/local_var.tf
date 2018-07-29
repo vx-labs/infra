@@ -1,7 +1,7 @@
 variable "master_images" {
   default = [
-    "master-5b535965-6c12-97d6-4caa-d24a5947c014",
-    "master-5b535965-6c12-97d6-4caa-d24a5947c014",
-    "master-5b535965-6c12-97d6-4caa-d24a5947c014"
+    "master-5b5e14a6-6d79-de61-aa2a-83535875439f",
+    "master-5b5e14a6-6d79-de61-aa2a-83535875439f",
+    "master-5b5e14a6-6d79-de61-aa2a-83535875439f"
   ]
 }
