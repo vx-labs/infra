@@ -55,7 +55,7 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name fabio --net=host fabiolb/fabio:1.5.9-go1.10.2 /fabio -cfg /etc/fabio/fabio.properties -proxy.addr ':1883;proto=tcp,:8883;proto=tcp,:80;proto=http,:443;proto=tcp+sni'
+        ExecStart=/usr/bin/docker run --rm --name fabio --net=host fabiolb/fabio:1.5.10-go1.11.1 -cfg /etc/fabio/fabio.properties -proxy.addr ':1883;proto=tcp;pxyproto=true,:8883;proto=tcp;pxyproto=true,:80;proto=http;pxyproto=true,:443;proto=tcp+sni;pxyproto=true'
         [Install]
         WantedBy=basic.target
 

@@ -40,3 +40,11 @@ services:
     volumes:
       - ./proxy/config.yaml:/usr/local/src/app/config.yaml
       - ./proxy/secrets.json:/srv/secrets.json
+  nats:
+    image: jbonachera/scaleway-coreos
+    environment:
+      - SCW_API_ACCESS_KEY=${api_access_key}
+      - SCW_API_TOKEN=${api_token}
+    volumes:
+      - ./nats/config.yaml:/usr/local/src/app/config.yaml
+      - ./nats/secrets.json:/srv/secrets.json

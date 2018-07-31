@@ -53,7 +53,7 @@ systemd:
         EnvironmentFile=/run/metadata/coreos
         EnvironmentFile=/etc/userdata.env
         ExecStart=/usr/bin/touch /etc/vault.env
-        ExecStart=/usr/bin/docker run --rm --name vault-auth \
+        ExecStart=/usr/bin/docker run --net=host --rm --name vault-auth \
           -v /etc/vault.env:/etc/vault.env \
           -e VAULT_ADDR=${VAULT_ADDR} \
           -e VAULT_ROLE_ID=${VAULT_ROLE_ID} \

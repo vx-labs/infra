@@ -63,29 +63,31 @@ systemd:
         Type=oneshot
         [Install]
         WantedBy=basic.target
-    - name: nomad.service
+    - name: nats.service
       enabled: true
       contents: |
         [Unit]
-        Description=Run nomad server
+        Description=Run nats streaming server
         Requires=network-online.target vault-auth.service coreos-metadata.service consul-agent.service
         After=consul-agent.service vault-auth.service
         [Service]
         EnvironmentFile=/run/metadata/coreos
         EnvironmentFile=/etc/vault.env
         EnvironmentFile=/etc/userdata.env
-        ExecStart=/usr/bin/docker  run --rm --name nomad-server \
-          -e VAULT_TOKEN=${VAULT_TOKEN} \
-          -v /var/lib/nomad:/var/lib/nomad \
-          --net=host jbonachera/nomad \
-            agent -config=/etc/nomad -server \
-            -consul-server-auto-join  \
-            -consul-auto-advertise \
-            -bootstrap-expect=${CLUSTER_SIZE} \
-            -vault-enabled \
-            -vault-address=http://172.17.0.1:8200 \
-            -vault-create-from-role=${VAULT_TOKEN_ROLE}
-        ExecStop=/usr/bin/docker stop nomad-server
+        ExecStart=/usr/bin/docker  run --rm --name nats \
+          -v /var/lib/nats:/var/lib/nats \
+          --net=host nats-streaming:0.10.2 \
+          --cluster_peers ${NATS_PEERS} \
+          --cluster_node_id ${NATS_ID} \
+          --routes ${NATS_ROUTES} \
+          --cluster nats://0.0.0.0:5222 \
+          --cluster_log_path /var/lib/nats/streaming \
+          -m 8444 \
+          --clustered \
+          -st file \
+          --dir /var/lib/nats \
+          -cid events
+        ExecStop=/usr/bin/docker stop nats
         [Install]
         WantedBy=basic.target
     - name: linkerd.service

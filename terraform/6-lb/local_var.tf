@@ -1,5 +1,5 @@
 variable "lb_images" {
   default = [
-    "lb-5b37e458-b03b-a8c8-ba6e-e591960232cc"
+    "lb-5c2a1b8e-f781-29dd-ebec-df1a73c2c5a9",
   ]
 }
