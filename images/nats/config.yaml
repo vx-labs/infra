@@ -76,7 +76,7 @@ systemd:
         EnvironmentFile=/etc/userdata.env
         ExecStart=/usr/bin/docker  run --rm --name nats \
           -v /var/lib/nats:/var/lib/nats \
-          --net=host nats-streaming:0.10.2 \
+          --net=host nats-streaming:0.11.2 \
           --cluster_peers ${NATS_PEERS} \
           --cluster_node_id ${NATS_ID} \
           --routes ${NATS_ROUTES} \
