@@ -55,3 +55,7 @@ resource "scaleway_user_data" "server-3-args" {
   key    = "NATS_ROUTES"
   value  = "nats://${module.server-2.server_private_ip}:5222,nats://${module.server-1.server_private_ip}:5222"
 }
+
+output "streaming-url" {
+  value = "nats-streaming://servers.nats.discovery.par1.${var.cloudflare_domain}:4222"
+}
