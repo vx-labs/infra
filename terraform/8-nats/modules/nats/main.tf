@@ -95,6 +95,14 @@ resource "vault_approle_auth_backend_role_secret_id" "nats" {
   cidr_list = ["${scaleway_server.nats.private_ip}/32"]
 }
 
+resource "cloudflare_record" "nats_direct_discovery" {
+  domain = "${var.domain}"
+  name   = "${var.index}.servers.nats.discovery.${var.region}"
+  value  = "${scaleway_server.nats.private_ip}"
+  type   = "A"
+  ttl    = 1
+}
+
 resource "cloudflare_record" "nats_discovery" {
   domain = "${var.domain}"
   name   = "servers.nats.discovery.${var.region}"
