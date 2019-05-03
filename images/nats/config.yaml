@@ -30,49 +30,15 @@ systemd:
             [Service]
             ExecStart=
             ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata ssh-keys %i
-    - name: consul-agent.service
-      contents: |
-        [Unit]
-        Description=Consul agent
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
-        [Service]
-        Restart=always
-        EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=servers.consul.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
-        ExecStop=/usr/bin/docker stop consul
-        [Install]
-        WantedBy=basic.target
-    - name: vault-auth.service
-      contents: |
-        [Unit]
-        Description=Generate vault configuration
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
-        [Service]
-        EnvironmentFile=/run/metadata/coreos
-        EnvironmentFile=/etc/userdata.env
-        ExecStart=/usr/bin/touch /etc/vault.env
-        ExecStart=/usr/bin/docker run --rm --net=host --name vault-auth \
-          -v /etc/vault.env:/etc/vault.env \
-          -e VAULT_ADDR=${VAULT_ADDR} \
-          -e VAULT_ROLE_ID=${VAULT_ROLE_ID} \
-          -e VAULT_SECRET_ID=${VAULT_SECRET_ID} \
-          quay.io/vxlabs/vault-config-extractor \
-            --vault-addr-env-var VAULT_ADDR -r VAULT_ROLE_ID -s VAULT_SECRET_ID -o /etc/vault.env
-        Type=oneshot
-        [Install]
-        WantedBy=basic.target
     - name: nats.service
       enabled: true
       contents: |
         [Unit]
         Description=Run nats streaming server
-        Requires=network-online.target vault-auth.service coreos-metadata.service consul-agent.service
-        After=consul-agent.service vault-auth.service
+        Requires=network-online.target coreos-metadata.service
+        After=coreos-metadata.service
         [Service]
         EnvironmentFile=/run/metadata/coreos
-        EnvironmentFile=/etc/vault.env
         EnvironmentFile=/etc/userdata.env
         ExecStart=/usr/bin/docker  run --rm --name nats \
           -v /var/lib/nats:/var/lib/nats \
@@ -90,18 +56,3 @@ systemd:
         ExecStop=/usr/bin/docker stop nats
         [Install]
         WantedBy=basic.target
-    - name: linkerd.service
-      enabled: true
-      contents: |
-        [Unit]
-        Description=Run linkerd
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
-        [Service]
-        Restart=always
-        EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name linkerd --net=host jbonachera/linkerd
-        ExecStop=/usr/bin/docker stop linkerd
-        [Install]
-        WantedBy=basic.target
-
