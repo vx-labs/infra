@@ -7,7 +7,6 @@ module "agent-1" {
   index     = "1"
   region    = "${var.region}"
   domain    = "${var.cloudflare_domain}"
-  type      = "DEV1-S"
   public_ip = false
 }
 
@@ -18,7 +17,6 @@ module "agent-2" {
   index     = "2"
   region    = "${var.region}"
   domain    = "${var.cloudflare_domain}"
-  type      = "DEV1-S"
   public_ip = false
 }
 
@@ -29,6 +27,5 @@ module "agent-3" {
   index     = "3"
   region    = "${var.region}"
   domain    = "${var.cloudflare_domain}"
-  type      = "DEV1-S"
   public_ip = false
 }

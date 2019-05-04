@@ -4,10 +4,14 @@ variable "image" {}
 variable "index" {}
 variable "secgroup" {}
 variable "expect_count" {}
+
 variable "public_ip" {
   default = true
 }
 
+variable "type" {
+  default = "START1-XS"
+}
 
 data "scaleway_image" "master" {
   architecture = "x86_64"
@@ -20,67 +24,67 @@ data "vault_approle_auth_backend_role_id" "role" {
 }
 
 resource "scaleway_server" "nomad-masters" {
-  name  = "nomad-master-${var.index}"
-  image = "${data.scaleway_image.master.id}"
+  name                = "nomad-master-${var.index}"
+  image               = "${data.scaleway_image.master.id}"
   dynamic_ip_required = "${var.public_ip}"
-  enable_ipv6 = false
-  type  = "START1-XS"
-  boot_type = "local"
-  security_group = "${var.secgroup}"
+  enable_ipv6         = false
+  type                = "${var.type}"
+  boot_type           = "local"
+  security_group      = "${var.secgroup}"
 }
 
 resource "scaleway_user_data" "count" {
   server = "${scaleway_server.nomad-masters.id}"
-  key = "COUNT"
-  value = "8"
+  key    = "COUNT"
+  value  = "8"
 }
 
 resource "scaleway_user_data" "http_proxy" {
   server = "${scaleway_server.nomad-masters.id}"
-  key = "http_proxy"
-  value = "http://http.proxy.discovery.${var.region}.${var.domain}:3128"
+  key    = "http_proxy"
+  value  = "http://http.proxy.discovery.${var.region}.${var.domain}:3128"
 }
 
 resource "scaleway_user_data" "https_proxy" {
   server = "${scaleway_server.nomad-masters.id}"
-  key = "https_proxy"
-  value = "http://http.proxy.discovery.${var.region}.${var.domain}:3128"
+  key    = "https_proxy"
+  value  = "http://http.proxy.discovery.${var.region}.${var.domain}:3128"
 }
-
 
 resource "scaleway_user_data" "cluster_size" {
   server = "${scaleway_server.nomad-masters.id}"
-  key = "CLUSTER_SIZE"
-  value = "${var.expect_count}"
+  key    = "CLUSTER_SIZE"
+  value  = "${var.expect_count}"
 }
 
 resource "scaleway_user_data" "vault_addr" {
   server = "${scaleway_server.nomad-masters.id}"
-  key = "VAULT_ADDR"
-  value = "http://127.0.0.1:8200"
+  key    = "VAULT_ADDR"
+  value  = "http://127.0.0.1:8200"
 }
 
 resource "scaleway_user_data" "vault_role" {
   server = "${scaleway_server.nomad-masters.id}"
-  key = "VAULT_ROLE_ID"
-  value = "${data.vault_approle_auth_backend_role_id.role.role_id}"
+  key    = "VAULT_ROLE_ID"
+  value  = "${data.vault_approle_auth_backend_role_id.role.role_id}"
 }
 
 resource "scaleway_user_data" "vault_secret" {
   server = "${scaleway_server.nomad-masters.id}"
-  key = "VAULT_SECRET_ID"
-  value = "${vault_approle_auth_backend_role_secret_id.masters.secret_id}"
+  key    = "VAULT_SECRET_ID"
+  value  = "${vault_approle_auth_backend_role_secret_id.masters.secret_id}"
 }
+
 resource "scaleway_user_data" "vault_token_role" {
   server = "${scaleway_server.nomad-masters.id}"
-  key = "VAULT_TOKEN_ROLE"
-  value = "nomad-cluster"
+  key    = "VAULT_TOKEN_ROLE"
+  value  = "nomad-cluster"
 }
 
 resource "vault_approle_auth_backend_role_secret_id" "masters" {
   backend   = "approle"
   role_name = "nomad-role"
-  cidr_list  = ["${scaleway_server.nomad-masters.private_ip}/32"]
+  cidr_list = ["${scaleway_server.nomad-masters.private_ip}/32"]
 }
 
 resource "cloudflare_record" "masters_discovery" {

@@ -7,6 +7,7 @@ module "coordinator-1" {
   region       = "${var.region}"
   domain       = "${var.cloudflare_domain}"
   public_ip    = false
+  type         = "START1-XS"
 }
 
 resource "scaleway_user_data" "consul_join_list_1" {
@@ -24,6 +25,7 @@ module "coordinator-2" {
   region       = "${var.region}"
   domain       = "${var.cloudflare_domain}"
   public_ip    = false
+  type         = "START1-XS"
 }
 
 resource "scaleway_user_data" "consul_join_list_2" {
@@ -41,6 +43,7 @@ module "coordinator-3" {
   region       = "${var.region}"
   domain       = "${var.cloudflare_domain}"
   public_ip    = false
+  type         = "START1-XS"
 }
 
 resource "scaleway_user_data" "consul_join_list_3" {
