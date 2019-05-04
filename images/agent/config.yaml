@@ -1,10 +1,4 @@
 ---
-passwd:
-  users:
-    - name: core
-      groups:
-        - sudo
-        - docker
 systemd:
   units:
     - name: docker.service
@@ -22,14 +16,6 @@ systemd:
             [Service]
             ExecStart=
             ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata -c COUNT
-    - name: "coreos-metadata-sshkeys@.service"
-      enabled: true
-      dropins:
-        - name: "use-script.conf"
-          contents: |
-            [Service]
-            ExecStart=
-            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata ssh-keys %i
     - name: consul-agent.service
       contents: |
         [Unit]
@@ -39,7 +25,7 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=servers.consul.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
+        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul:1.2 agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=servers.consul.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
         ExecStop=/usr/bin/docker stop consul
         [Install]
         WantedBy=basic.target
