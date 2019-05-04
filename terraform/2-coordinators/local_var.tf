@@ -1,7 +1,7 @@
 variable "coordinator_images" {
   default = [
-    "coordinator-5b3790e9-5d50-33bd-acdd-f77c8ec70b73",
-    "coordinator-5b3790e9-5d50-33bd-acdd-f77c8ec70b73",
-    "coordinator-5b3790e9-5d50-33bd-acdd-f77c8ec70b73"
+    "coordinator-5ccde181-e9ca-12ae-5c5c-8280505a4f95",
+    "coordinator-5ccde181-e9ca-12ae-5c5c-8280505a4f95",
+    "coordinator-5ccde181-e9ca-12ae-5c5c-8280505a4f95",
   ]
 }

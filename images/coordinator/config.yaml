@@ -1,36 +1,16 @@
 ---
-passwd:
-  users:
-    - name: core
-      groups:
-        - sudo
-        - docker
-storage:
-  files:
-    - filesystem: "root"
-      path: "/var/lib/iptables/rules-save"
-      mode: 0644
-      contents:
-        remote:
-          url: "https://raw.githubusercontent.com/vx-labs/infra/master/images/coordinator/iptables.rules"
-    - filesystem: "root"
-      path: "/opt/scaleway-coreos-custom-metadata"
-      mode: 0750
-      contents:
-        remote:
-          url: "https://github.com/jbonachera/scaleway-coreos-custom-metadata/releases/download/v0.0.11/scaleway-coreos-custom-metadata"
+locksmith:
+  reboot_strategy: "off"
 systemd:
   units:
-    - name: "iptables-restore.service"
-      enabled: true
-    - name: "coreos-metadata-sshkeys@.service"
-      enabled: true
+    - name: docker.service
       dropins:
-        - name: "use-script.conf"
+        - name: 20-http-proxy.conf
           contents: |
+            [Unit]
+            After=coreos-metadata.service
             [Service]
-            ExecStart=
-            ExecStart=/opt/scaleway-coreos-custom-metadata ssh-keys %i
+            EnvironmentFile=/etc/userdata.env
     - name: "coreos-metadata.service"
       dropins:
         - name: "use-script.conf"
@@ -38,7 +18,7 @@ systemd:
             [Service]
             # Empty ExecStart= prevents the previously defined ExecStart from running
             ExecStart=
-            ExecStart=/opt/scaleway-coreos-custom-metadata -c COUNT
+            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata -c COUNT
     - name: consul.service
       enabled: true
       contents: |
