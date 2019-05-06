@@ -4,6 +4,10 @@ variable "image" {}
 variable "index" {}
 variable "secgroup" {}
 
+variable "cloudinit" {
+  default = ""
+}
+
 variable "type" {
   default = "START1-XS"
 }
@@ -30,6 +34,7 @@ resource "scaleway_server" "nomad-agents" {
   type                = "${var.type}"
   boot_type           = "local"
   security_group      = "${var.secgroup}"
+  cloudinit           = "${var.cloudinit}"
 }
 
 resource "scaleway_user_data" "count" {

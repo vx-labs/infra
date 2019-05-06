@@ -1,5 +1,11 @@
 provider "vault" {}
 
+data "ct_config" "agent" {
+  content      = "${file("config.yaml")}"
+  platform     = "custom"
+  pretty_print = false
+}
+
 module "agent-1" {
   source    = "./modules/nomad-agent"
   image     = "${element(var.agent_images, 0)}"
@@ -8,6 +14,7 @@ module "agent-1" {
   region    = "${var.region}"
   domain    = "${var.cloudflare_domain}"
   public_ip = false
+  cloudinit = "${data.ct_config.agent.rendered}"
 }
 
 module "agent-2" {
@@ -18,6 +25,7 @@ module "agent-2" {
   region    = "${var.region}"
   domain    = "${var.cloudflare_domain}"
   public_ip = false
+  cloudinit = "${data.ct_config.agent.rendered}"
 }
 
 module "agent-3" {
@@ -28,4 +36,5 @@ module "agent-3" {
   region    = "${var.region}"
   domain    = "${var.cloudflare_domain}"
   public_ip = false
+  cloudinit = "${data.ct_config.agent.rendered}"
 }

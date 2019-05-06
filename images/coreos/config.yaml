@@ -1,0 +1,18 @@
+---
+systemd:
+  units:
+    - name: fakeinit.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run cloud-init, then restart
+        Requires=network-online.target
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata cloud-init -o /usr/share/oem/base/default.ign
+        ExecStart=/usr/bin/touch /boot/coreos/first_boot
+        ExecStart=/usr/bin/rm -f /etc/systemd/system/fakeinit.service
+        ExecStart=/usr/sbin/reboot
+        [Install]
+        WantedBy=basic.target
+

@@ -1,5 +1,10 @@
 # VX-Labs Infrastructure
 
+## Setup
+
+This project uses https://github.com/poseidon/terraform-provider-ct to transpile ContainerLinux config into
+JSON. It must be installed.
+
 ## Usage
 
 Building instance images:

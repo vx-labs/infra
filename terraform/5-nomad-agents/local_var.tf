@@ -1,7 +1,7 @@
 variable "agent_images" {
   default = [
-    "coreos-nomad-agent-5ccdffc9-5814-7563-bb30-cbb23ec75d10",
-    "coreos-nomad-agent-5ccdffc9-5814-7563-bb30-cbb23ec75d10",
-    "coreos-nomad-agent-5ccdffc9-5814-7563-bb30-cbb23ec75d10",
+    "coreos-5ccffd06-ad32-8dff-9ed6-2a2edc3eed3a",
+    "coreos-5ccffd06-ad32-8dff-9ed6-2a2edc3eed3a",
+    "coreos-5ccffd06-ad32-8dff-9ed6-2a2edc3eed3a",
   ]
 }
