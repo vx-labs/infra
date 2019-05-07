@@ -9,15 +9,20 @@ module "server-1" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "servers.nomad"
-  vault_role       = "nomad-role"
-  vault_token_role = "nomad-cluster"
-  user_data_count  = 1
+  user_data_count  = 5
 }
 
 resource "scaleway_user_data" "cluster_size_1" {
   server = "${module.server-1.instance_id}"
   key    = "CLUSTER_SIZE"
   value  = "${length(var.master_images)}"
+}
+module "server-1-identity" {
+  source              = "../modules/vault_identity"
+  instance_id         = "${module.server-1.instance_id}"
+  instance_private_ip = "${module.server-1.instance_private_ip}"
+  vault_role          = "nomad-role"
+  vault_token_role    = "nomad-cluster"
 }
 
 module "server-2" {
@@ -29,9 +34,14 @@ module "server-2" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "servers.nomad"
-  vault_role       = "nomad-role"
-  vault_token_role = "nomad-cluster"
-  user_data_count  = 1
+  user_data_count  = 5
+}
+module "server-2-identity" {
+  source              = "../modules/vault_identity"
+  instance_id         = "${module.server-2.instance_id}"
+  instance_private_ip = "${module.server-2.instance_private_ip}"
+  vault_role          = "nomad-role"
+  vault_token_role    = "nomad-cluster"
 }
 
 resource "scaleway_user_data" "cluster_size_2" {
@@ -49,9 +59,14 @@ module "server-3" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "servers.nomad"
-  vault_role       = "nomad-role"
-  vault_token_role = "nomad-cluster"
-  user_data_count  = 1
+  user_data_count  = 5
+}
+module "server-3-identity" {
+  source              = "../modules/vault_identity"
+  instance_id         = "${module.server-3.instance_id}"
+  instance_private_ip = "${module.server-3.instance_private_ip}"
+  vault_role          = "nomad-role"
+  vault_token_role    = "nomad-cluster"
 }
 
 resource "scaleway_user_data" "cluster_size_3" {

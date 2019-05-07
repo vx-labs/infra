@@ -7,9 +7,17 @@ module "agent-1" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "agents.nomad"
-  vault_role       = "nomad-role"
-  vault_token_role = "nomad-cluster"
+  user_data_count  = 4
 }
+
+module "agent-1-identity" {
+  source              = "../modules/vault_identity"
+  instance_id         = "${module.agent-1.instance_id}"
+  instance_private_ip = "${module.agent-1.instance_private_ip}"
+  vault_role          = "nomad-role"
+  vault_token_role    = "nomad-cluster"
+}
+
 module "agent-2" {
   source           = "../modules/instance"
   image            = "${element(var.agent_images, 1)}"
@@ -19,9 +27,17 @@ module "agent-2" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "agents.nomad"
-  vault_role       = "nomad-role"
-  vault_token_role = "nomad-cluster"
+  user_data_count  = 4
 }
+
+module "agent-2-identity" {
+  source              = "../modules/vault_identity"
+  instance_id         = "${module.agent-2.instance_id}"
+  instance_private_ip = "${module.agent-2.instance_private_ip}"
+  vault_role          = "nomad-role"
+  vault_token_role    = "nomad-cluster"
+}
+
 module "agent-3" {
   source           = "../modules/instance"
   image            = "${element(var.agent_images, 2)}"
@@ -31,6 +47,13 @@ module "agent-3" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "agents.nomad"
-  vault_role       = "nomad-role"
-  vault_token_role = "nomad-cluster"
+  user_data_count  = 4
+}
+
+module "agent-3-identity" {
+  source              = "../modules/vault_identity"
+  instance_id         = "${module.agent-3.instance_id}"
+  instance_private_ip = "${module.agent-3.instance_private_ip}"
+  vault_role          = "nomad-role"
+  vault_token_role    = "nomad-cluster"
 }
