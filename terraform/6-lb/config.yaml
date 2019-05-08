@@ -1,0 +1,37 @@
+---
+systemd:
+  units:
+    - name: "coreos-metadata.service"
+      dropins:
+        - name: "use-script.conf"
+          contents: |
+            [Service]
+            ExecStart=
+            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata -c COUNT
+    - name: consul-agent.service
+      contents: |
+        [Unit]
+        Description=Consul agent
+        Requires=network-online.target coreos-metadata.service
+        After=coreos-metadata.service
+        [Service]
+        Restart=always
+        EnvironmentFile=-/run/metadata/coreos
+        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=servers.consul.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
+        ExecStop=/usr/bin/docker stop consul
+        [Install]
+        WantedBy=basic.target
+    - name: fabio.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run fabio LB agent
+        Requires=network-online.target consul-agent.service
+        After=consul-agent.service
+        [Service]
+        Restart=always
+        EnvironmentFile=-/run/metadata/coreos
+        ExecStart=/usr/bin/docker run --rm --name fabio --net=host fabiolb/fabio:1.5.10-go1.11.1 -cfg /etc/fabio/fabio.properties -proxy.addr ':1883;proto=tcp;pxyproto=true,:8883;proto=tcp;pxyproto=true,:80;proto=http;pxyproto=true,:443;proto=tcp+sni;pxyproto=true'
+        [Install]
+        WantedBy=basic.target
+

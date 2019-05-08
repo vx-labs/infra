@@ -4,19 +4,19 @@ data "scaleway_image" "lb" {
 }
 
 resource "scaleway_ip" "nomad-lb-ip" {
-  server = "${element(scaleway_server.nomad-lb.*.id, count.index)}"
-  count  = "${var.lb_count}"
+  server = "${module.lb-1.instance_id}"
 }
 
-resource "scaleway_server" "nomad-lb" {
-  name                = "nomad-lb"
-  image               = "${data.scaleway_image.lb.id}"
-  dynamic_ip_required = false
-  enable_ipv6         = false
-  type                = "START1-XS"
-  count               = "${var.lb_count}"
-  boot_type           = "local"
-  security_group      = "${scaleway_security_group.nomad_lb.id}"
+
+module "lb-1" {
+  source           = "../modules/instance"
+  image            = "${element(var.lb_images, 0)}"
+  secgroup         = "${scaleway_security_group.nomad_lb.id}"
+  hostname         = "lb-1"
+  region           = "${var.region}"
+  domain           = "${var.cloudflare_domain}"
+  cloudinit        = "${file("config.yaml")}"
+  discovery_record = "servers.lb"
 }
 
 resource "scaleway_security_group" "nomad_lb" {
