@@ -1,17 +1,13 @@
-data "scaleway_image" "proxies" {
-  count = "${length(var.proxy_images)}"
-  architecture = "x86_64"
-  name         = "${element(var.proxy_images, count.index)}"
-}
-resource "scaleway_server" "proxies" {
-  count = "${length(var.proxy_images)}"
-  name  = "proxy-${count.index}"
-  image = "${element(data.scaleway_image.proxies.*.id, count.index)}"
-  dynamic_ip_required = true
-  enable_ipv6 = false
-  type  = "START1-XS"
-  boot_type = "local"
-  security_group = "${scaleway_security_group.proxies.id}"
+module "proxy-1" {
+  source           = "../modules/instance"
+  image            = "${element(var.proxy_images, 0)}"
+  secgroup         = "${scaleway_security_group.proxies.id}"
+  hostname         = "proxy-1"
+  region           = "${var.region}"
+  domain           = "${var.cloudflare_domain}"
+  cloudinit        = "${file("config.yaml")}"
+  discovery_record = "servers.proxy"
+  public_ip        = true
 }
 
 resource "scaleway_security_group" "proxies" {
@@ -28,14 +24,14 @@ resource "scaleway_security_group_rule" "ssh_accept" {
   protocol  = "TCP"
   port      = 22
 }
+
 resource "scaleway_security_group_rule" "drop_all_ssh" {
   security_group = "${scaleway_security_group.proxies.id}"
-  depends_on = ["scaleway_security_group_rule.ssh_accept"]
+  depends_on     = ["scaleway_security_group_rule.ssh_accept"]
 
   action    = "drop"
   direction = "inbound"
   ip_range  = "0.0.0.0/0"
   protocol  = "TCP"
-  port = 22
+  port      = 22
 }
-

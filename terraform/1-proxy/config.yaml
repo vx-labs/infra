@@ -1,0 +1,23 @@
+---
+systemd:
+  units:
+    - name: "coreos-metadata.service"
+      dropins:
+        - name: "use-script.conf"
+          contents: |
+            [Service]
+            ExecStart=
+            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata -c COUNT
+    - name: squid.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Qquid HTTP proxy server
+        Requires=network-online.target
+        [Service]
+        Restart=always
+        EnvironmentFile=-/run/metadata/coreos
+        ExecStart=/usr/bin/docker run --rm --name tinyproxy -p 3128:3128 jbonachera/tinyproxy
+        [Install]
+        WantedBy=basic.target
+

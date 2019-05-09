@@ -1,5 +1,5 @@
 variable "proxy_images" {
   default = [
-    "proxy-5b5332c4-6d05-8623-514f-713160947c6c",
+    "coreos-5ccffd06-ad32-8dff-9ed6-2a2edc3eed3a",
   ]
 }
