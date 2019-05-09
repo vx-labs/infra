@@ -1,7 +1,7 @@
 variable "nats_images" {
   default = [
-    "nats-5c3a5cc1-28b2-f72b-f8b9-c1e2e8b605f8",
-    "nats-5c3a5cc1-28b2-f72b-f8b9-c1e2e8b605f8",
-    "nats-5c3a5cc1-28b2-f72b-f8b9-c1e2e8b605f8",
+    "coreos-5ccffd06-ad32-8dff-9ed6-2a2edc3eed3a",
+    "coreos-5ccffd06-ad32-8dff-9ed6-2a2edc3eed3a",
+    "coreos-5ccffd06-ad32-8dff-9ed6-2a2edc3eed3a",
   ]
 }

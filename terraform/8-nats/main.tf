@@ -1,36 +1,72 @@
 provider "vault" {}
 
-module "server-1" {
-  source       = "./modules/nats"
-  image        = "${element(var.nats_images, 0)}"
-  secgroup     = "${scaleway_security_group.nats_server.id}"
-  index        = "1"
-  expect_count = "${length(var.nats_images)}"
-  region       = "${var.region}"
-  domain       = "${var.cloudflare_domain}"
-  public_ip    = false
+module "nats-1" {
+  source           = "../modules/instance"
+  image            = "${element(var.nats_images, 0)}"
+  secgroup         = "${scaleway_security_group.nats_server.id}"
+  hostname         = "nats-1"
+  region           = "${var.region}"
+  domain           = "${var.cloudflare_domain}"
+  cloudinit        = "${file("config.yaml")}"
+  discovery_record = "servers.nats"
+  user_data_count  = 2
+}
+resource "scaleway_user_data" "nats-id" {
+  server = "${module.nats-1.instance_id}"
+  key    = "NATS_ID"
+  value  = "1"
 }
 
-module "server-2" {
-  source       = "./modules/nats"
-  image        = "${element(var.nats_images, 1)}"
-  secgroup     = "${scaleway_security_group.nats_server.id}"
-  index        = "2"
-  expect_count = "${length(var.nats_images)}"
-  region       = "${var.region}"
-  domain       = "${var.cloudflare_domain}"
-  public_ip    = false
+resource "scaleway_user_data" "server-1-args" {
+  server = "${module.nats-1.instance_id}"
+  key    = "NATS_ROUTES"
+  value  = "nats://${module.nats-2.instance_private_ip}:5222,nats://${module.nats-3.instance_private_ip}:5222"
 }
 
-module "server-3" {
-  source       = "./modules/nats"
-  image        = "${element(var.nats_images, 2)}"
-  secgroup     = "${scaleway_security_group.nats_server.id}"
-  index        = "3"
-  expect_count = "${length(var.nats_images)}"
-  region       = "${var.region}"
-  domain       = "${var.cloudflare_domain}"
-  public_ip    = false
+module "nats-2" {
+  source           = "../modules/instance"
+  image            = "${element(var.nats_images, 1)}"
+  secgroup         = "${scaleway_security_group.nats_server.id}"
+  hostname         = "nats-2"
+  region           = "${var.region}"
+  domain           = "${var.cloudflare_domain}"
+  cloudinit        = "${file("config.yaml")}"
+  discovery_record = "servers.nats"
+  user_data_count  = 2
+}
+resource "scaleway_user_data" "nats-2-id" {
+  server = "${module.nats-2.instance_id}"
+  key    = "NATS_ID"
+  value  = "2"
+}
+
+resource "scaleway_user_data" "server-2-args" {
+  server = "${module.nats-2.instance_id}"
+  key    = "NATS_ROUTES"
+  value  = "nats://${module.nats-1.instance_private_ip}:5222,nats://${module.nats-3.instance_private_ip}:5222"
+}
+
+module "nats-3" {
+  source           = "../modules/instance"
+  image            = "${element(var.nats_images, 2)}"
+  secgroup         = "${scaleway_security_group.nats_server.id}"
+  hostname         = "nats-3"
+  region           = "${var.region}"
+  domain           = "${var.cloudflare_domain}"
+  cloudinit        = "${file("config.yaml")}"
+  discovery_record = "servers.nats"
+  user_data_count  = 2
+}
+resource "scaleway_user_data" "nats-3-id" {
+  server = "${module.nats-3.instance_id}"
+  key    = "NATS_ID"
+  value  = "3"
+}
+
+resource "scaleway_user_data" "server-3-args" {
+  server = "${module.nats-3.instance_id}"
+  key    = "NATS_ROUTES"
+  value  = "nats://${module.nats-1.instance_private_ip}:5222,nats://${module.nats-2.instance_private_ip}:5222"
 }
 
 resource "scaleway_security_group" "nats_server" {
@@ -38,23 +74,6 @@ resource "scaleway_security_group" "nats_server" {
   description = "NATS servers"
 }
 
-resource "scaleway_user_data" "server-1-args" {
-  server = "${module.server-1.server_id}"
-  key    = "NATS_ROUTES"
-  value  = "nats://${module.server-2.server_private_ip}:5222,nats://${module.server-3.server_private_ip}:5222"
-}
-
-resource "scaleway_user_data" "server-2-args" {
-  server = "${module.server-2.server_id}"
-  key    = "NATS_ROUTES"
-  value  = "nats://${module.server-1.server_private_ip}:5222,nats://${module.server-3.server_private_ip}:5222"
-}
-
-resource "scaleway_user_data" "server-3-args" {
-  server = "${module.server-3.server_id}"
-  key    = "NATS_ROUTES"
-  value  = "nats://${module.server-2.server_private_ip}:5222,nats://${module.server-1.server_private_ip}:5222"
-}
 
 output "streaming-url" {
   value = "nats-streaming://servers.nats.discovery.par1.${var.cloudflare_domain}:4222"
