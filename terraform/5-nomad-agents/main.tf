@@ -7,7 +7,7 @@ module "agent-1" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "agents.nomad"
-  user_data_count  = 4
+  user_data_count  = 5
 }
 
 module "agent-1-identity" {
@@ -27,7 +27,7 @@ module "agent-2" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "agents.nomad"
-  user_data_count  = 4
+  user_data_count  = 5
 }
 
 module "agent-2-identity" {
@@ -47,7 +47,7 @@ module "agent-3" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "agents.nomad"
-  user_data_count  = 4
+  user_data_count  = 5
 }
 
 module "agent-3-identity" {

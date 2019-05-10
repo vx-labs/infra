@@ -32,6 +32,12 @@ resource "scaleway_user_data" "vault_secret" {
   value  = "${vault_approle_auth_backend_role_secret_id.secret.secret_id}"
 }
 
+resource "scaleway_user_data" "vault_addr" {
+  server = "${var.instance_id}"
+  key    = "VAULT_ADDR"
+  value  = "http://localhost:8200"
+}
+
 output "ud_count" {
-  value = "4"
+  value = "5"
 }

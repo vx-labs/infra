@@ -9,7 +9,7 @@ module "server-1" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "servers.nomad"
-  user_data_count  = 5
+  user_data_count  = 6
 }
 
 resource "scaleway_user_data" "cluster_size_1" {
@@ -17,6 +17,7 @@ resource "scaleway_user_data" "cluster_size_1" {
   key    = "CLUSTER_SIZE"
   value  = "${length(var.master_images)}"
 }
+
 module "server-1-identity" {
   source              = "../modules/vault_identity"
   instance_id         = "${module.server-1.instance_id}"
@@ -34,8 +35,9 @@ module "server-2" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "servers.nomad"
-  user_data_count  = 5
+  user_data_count  = 6
 }
+
 module "server-2-identity" {
   source              = "../modules/vault_identity"
   instance_id         = "${module.server-2.instance_id}"
@@ -59,8 +61,9 @@ module "server-3" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "servers.nomad"
-  user_data_count  = 5
+  user_data_count  = 6
 }
+
 module "server-3-identity" {
   source              = "../modules/vault_identity"
   instance_id         = "${module.server-3.instance_id}"
@@ -74,6 +77,7 @@ resource "scaleway_user_data" "cluster_size_3" {
   key    = "CLUSTER_SIZE"
   value  = "${length(var.master_images)}"
 }
+
 resource "scaleway_security_group" "nomad_server" {
   name        = "nomad-server"
   description = "Nomad servers (masters)"
