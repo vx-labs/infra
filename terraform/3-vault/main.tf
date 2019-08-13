@@ -15,6 +15,11 @@ resource "vault_policy" "nomad-tls-storer" {
   policy = "${file("nomad-tls-storer-policy.hcl")}"
 }
 
+resource "vault_policy" "nomad-logzio-shipper" {
+  name   = "nomad-logzio-shipper"
+  policy = "${file("nomad-logzio-shipper-policy.hcl")}"
+}
+
 resource "vault_policy" "nomad-es-helper" {
   name   = "nomad-es-helper"
   policy = "${file("nomad-es-helper-policy.hcl")}"
@@ -61,6 +66,28 @@ resource "vault_generic_secret" "vx-datadog" {
   data_json = <<EOT
 {
   "api_token": "${var.datadog_token}"
+}
+EOT
+}
+
+resource "vault_generic_secret" "vx-logzio" {
+  path = "/secret/data/vx/logzio"
+
+  data_json = <<EOT
+{
+  "token": "${var.logzio_token}"
+}
+EOT
+}
+
+resource "vault_generic_secret" "vx-config" {
+  path = "/secret/data/vx/mqtt"
+
+  data_json = <<EOT
+{
+  "http_proxy": "http://http.proxy.discovery.par1.vx-labs.net:3128",
+  "jwt_sign_key": "${var.jwt_sign_key}",
+  "acme_email": "julien@bonachera.fr"
 }
 EOT
 }
