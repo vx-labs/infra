@@ -1,6 +1,7 @@
 path "secret/data/mqtt/acme/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
+
 path "secret/data/vx/mqtt" {
   capabilities = ["read"]
 }
@@ -66,6 +67,14 @@ path "secret/data/mqtt/tls/mqtt.iot.cloud.vx-labs.net/private_key" {
 }
 
 path "secret/data/mqtt/tls/mqtt.iot.cloud.vx-labs.net/certificate" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+path "secret/data/mqtt/tls/deployment.iot.cloud.vx-labs.net/private_key" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+path "secret/data/mqtt/tls/deployment.iot.cloud.vx-labs.net/certificate" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
 

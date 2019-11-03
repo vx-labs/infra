@@ -1,3 +1,4 @@
+variable "logzio_token" {}
 variable "datadog_token" {}
 variable "cloudflare_email" {}
 variable "cloudflare_token" {}

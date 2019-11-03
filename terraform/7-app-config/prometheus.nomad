@@ -26,34 +26,32 @@ global:
 
 scrape_configs:
 
-  - job_name: 'nomad_metrics'
+  - job_name: 'mqtt_metrics'
 
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus_ui" }}:8500'
-      services: ['nomad-client', 'nomad']
-
-    relabel_configs:
-    - source_labels: ['__meta_consul_tags']
-      regex: '(.*)http(.*)'
-      action: keep
+      services: ['mqtt-metrics']
 
     scrape_interval: 5s
-    metrics_path: /v1/metrics
+    metrics_path: /metrics
     params:
       format: ['prometheus']
 EOH
       }
       driver = "docker"
       config {
-        image = "prom/prometheus:latest"
+        image = "prom/prometheus:v2.10.0"
         volumes = [
-          "local/prometheus.yml:/etc/prometheus/prometheus.yml"
+          "local/prometheus.yml:/etc/prometheus/prometheus.yml",
+          "local/:/prometheus/",
         ]
         port_map {
           prometheus_ui = 9090
         }
       }
       resources {
+        cpu    = 200
+        memory = 512
         network {
           mbits = 10
           port "prometheus_ui" {}
@@ -61,7 +59,7 @@ EOH
       }
       service {
         name = "prometheus"
-        tags = ["urlprefix-/"]
+        tags = ["urlprefix-prometheus.cloud.vx-labs.net/"]
         port = "prometheus_ui"
         check {
           name     = "prometheus_ui port alive"
