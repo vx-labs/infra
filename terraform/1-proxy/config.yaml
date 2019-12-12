@@ -20,4 +20,16 @@ systemd:
         ExecStart=/usr/bin/docker run --rm --name tinyproxy -p 3128:3128 jbonachera/tinyproxy
         [Install]
         WantedBy=basic.target
+    - name: vpn.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=SSH VPN Server
+        Requires=network-online.target
+        [Service]
+        Restart=always
+        EnvironmentFile=-/run/metadata/coreos
+        ExecStart=/usr/bin/docker run -it --rm --name sshd --net=host -v /home/:/home:ro quay.io/jbonachera/sshd
+        [Install]
+        WantedBy=basic.target
 
