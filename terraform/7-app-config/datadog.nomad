@@ -30,6 +30,7 @@ job "datadog" {
         destination = "local/datadog.conf"
 
         data = <<EOH
+DD_PROCESS_AGENT_ENABLED="true"
 DD_API_KEY="{{with secret "secret/data/vx/datadog"}}{{.Data.api_token}}{{end}}"
 EOH
       }

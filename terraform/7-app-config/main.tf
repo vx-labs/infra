@@ -51,3 +51,13 @@ resource "vault_generic_secret" "tracing-config" {
 }
 EOT
 }
+
+resource "vault_generic_secret" "vx-dashboards" {
+  path = "/secret/data/vx/grafana"
+
+  data_json = <<EOT
+{
+  "nomad": "${filebase64("dashboards/nomad.json")}"
+}
+EOT
+}

@@ -7,7 +7,6 @@ resource "scaleway_ip" "nomad-lb-ip" {
   server = "${module.lb-1.instance_id}"
 }
 
-
 module "lb-1" {
   source           = "../modules/instance"
   image            = "${element(var.lb_images, 0)}"
@@ -17,6 +16,13 @@ module "lb-1" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "servers.lb"
+  user_data_count  = 1
+}
+
+resource "scaleway_user_data" "consul_join_list" {
+  server = "${module.lb-1.instance_id}"
+  key    = "CONSUL_JOIN_LIST"
+  value  = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"
 }
 
 resource "scaleway_security_group" "nomad_lb" {

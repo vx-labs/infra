@@ -20,6 +20,11 @@ resource "vault_policy" "nomad-logzio-shipper" {
   policy = "${file("nomad-logzio-shipper-policy.hcl")}"
 }
 
+resource "vault_policy" "nomad-grafana" {
+  name   = "nomad-grafana"
+  policy = "${file("nomad-grafana-policy.hcl")}"
+}
+
 resource "vault_policy" "nomad-datadog-shipper" {
   name   = "nomad-datadog-shipper"
   policy = "${file("nomad-datadog-shipper-policy.hcl")}"

@@ -29,7 +29,7 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run -it --rm --name sshd --net=host -v /home/:/home:ro quay.io/jbonachera/sshd
+        ExecStart=/usr/bin/docker run --rm --name sshd --net=host -v /home/:/home:ro quay.io/jbonachera/sshd
         [Install]
         WantedBy=basic.target
 

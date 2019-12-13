@@ -9,16 +9,24 @@ provider "cloudflare" {
 }
 
 variable "scw_api_organization" {}
-variable "scw_api_token" {}
+variable "scw_access_key" {}
+variable "scw_secret_key" {}
 
 variable "region" {
-  default = "par1"
+  default = "fr-par"
+}
+
+variable "zone" {
+  default = "fr-par-1"
 }
 
 provider "scaleway" {
+  version      = "~> 1.11"
   organization = "${var.scw_api_organization}"
-  token        = "${var.scw_api_token}"
+  access_key   = "${var.scw_access_key}"
+  secret_key   = "${var.scw_secret_key}"
   region       = "${var.region}"
+  zone         = "${var.zone}"
 }
 
 provider "ct" {
