@@ -43,7 +43,7 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name vault --net=host --cap-add=IPC_LOCK -e 'VAULT_LOCAL_CONFIG={"ui": true, "listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": true}}, "backend": {"consul": {"service_tags": "urlprefix-vault.cloud.vx-labs.net/"}}, "default_lease_ttl": "168h", "max_lease_ttl": "720h"}' vault server
+        ExecStart=/usr/bin/docker run --rm --name vault --net=host --cap-add=IPC_LOCK -e 'VAULT_LOCAL_CONFIG={"ui": true, "listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": true}}, "backend": {"consul": {"service_tags": "traefik.http.routers.vault.rule=Host(`vault.cloud.vx-labs.net`),traefik.enable=true,traefik.http.routers.vault.tls=true,traefik.http.routers.vault.tls.certresolver=le,traefik.http.services.vault.loadbalancer.healthcheck.path=/v1/sys/health?standbycode=200,traefik.http.routers.vault.service=vault"}}, "default_lease_ttl": "168h", "max_lease_ttl": "720h"}' vault server
         ExecStop=/usr/bin/docker stop vault
         [Install]
         WantedBy=basic.target
