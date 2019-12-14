@@ -1,4 +1,10 @@
 ---
+storage:
+  files:
+    - filesystem: root
+      path: /etc/traefik/le.json
+      mode: 0600
+      owner: root
 systemd:
   units:
     - name: "coreos-metadata.service"
@@ -22,17 +28,52 @@ systemd:
         ExecStop=/usr/bin/docker stop consul
         [Install]
         WantedBy=basic.target
-    - name: fabio.service
+    - name: traefik.service
       enabled: true
       contents: |
         [Unit]
-        Description=Run fabio LB agent
+        Description=Run Traefik LB
         Requires=network-online.target consul-agent.service
         After=consul-agent.service
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name fabio --net=host fabiolb/fabio:1.5.10-go1.11.1 -cfg /etc/fabio/fabio.properties -proxy.addr ':1883;proto=tcp;pxyproto=true,:8883;proto=tcp;pxyproto=true,:80;proto=http;pxyproto=true,:443;proto=tcp+sni;pxyproto=true'
+        EnvironmentFile=-/etc/userdata.env
+        ExecStop=/usr/bin/docker stop traefik
+        ExecStart=/usr/bin/docker run --rm --name traefik --net=host \
+          -l "traefik.http.services.dummyService.loadbalancer.server.port=1337" \
+          -l "traefik.http.routers.api.rule=Host(`${LB_DASHBOARD_DOMAIN}`)" \
+          -l "traefik.http.routers.api.entrypoints=https" \
+          -l "traefik.http.routers.api.service=api@internal" \
+          -l "traefik.http.routers.api.tls" \
+          -l "traefik.http.routers.api.tls.certresolver=le" \
+          -l "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, ${COREOS_CUSTOM_PUBLIC_IPV4}" \
+          -l "traefik.enable=true" \
+          -v /etc/traefik/le.json:/etc/traefik/le.json \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v /etc/traefik/:/etc/traefik/:ro traefik:v2.1.1 \
+              --global.checknewversion="false" \
+              --global.sendanonymoususage="false" \
+              --accesslog \
+              --api \
+              --entryPoints.http \
+              --entryPoints.http.address=":80" \
+              --entryPoints.https \
+              --entryPoints.https.address=":443" \
+              --entryPoints.mqtt \
+              --entryPoints.mqtt.address=":1883" \
+              --entryPoints.mqtts \
+              --entryPoints.mqtts.address=":8883" \
+              --providers.consulcatalog.exposedbydefault="false" \
+              --log \
+              --log.level="info" \
+              --certificatesresolvers.le \
+              --certificatesresolvers.le.acme.keytype="EC384" \
+              --certificatesresolvers.le.acme.storage="/etc/traefik/le.json" \
+              --certificatesresolvers.le.acme.tlschallenge \
+              --certificatesresolvers.le.acme.email="${LE_EMAIL}" \
+              --providers.docker.endpoint=unix:///var/run/docker.sock \
+              --providers.docker.exposedByDefault=false
         [Install]
         WantedBy=basic.target
 

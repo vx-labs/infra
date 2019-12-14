@@ -6,8 +6,8 @@ variable "cloudflare_domain" {}
 
 provider "cloudflare" {
   version = "~> 1.0"
-  email   = "${var.cloudflare_email}"
-  token   = "${var.cloudflare_token}"
+  email   = var.cloudflare_email
+  token   = var.cloudflare_token
 }
 
 variable "scw_api_organization" {}
@@ -24,9 +24,9 @@ variable "zone" {
 
 provider "scaleway" {
   version      = "~> 1.11"
-  organization = "${var.scw_api_organization}"
-  access_key   = "${var.scw_access_key}"
-  secret_key   = "${var.scw_secret_key}"
-  region       = "${var.region}"
-  zone         = "${var.zone}"
+  organization = var.scw_api_organization
+  access_key   = var.scw_access_key
+  secret_key   = var.scw_secret_key
+  region       = var.region
+  zone         = var.zone
 }
