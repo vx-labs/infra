@@ -1,3 +1,4 @@
+variable "letsencrypt_email" {}
 variable "agent_count" {
   default = 3
 }
