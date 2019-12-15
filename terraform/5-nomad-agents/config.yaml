@@ -1,4 +1,21 @@
 ---
+storage:
+  files:
+    - filesystem: root
+      path: /etc/systemd/resolved.conf
+      contents:
+        inline: |
+          [Resolve]
+          DNS=127.0.0.1
+          Cache=no
+          LLMNR=no
+          DNSSEC=no
+          DNSStubListener=no
+  links:
+    - filesystem: root
+      path: /etc/resolv.conf
+      target: /run/systemd/resolve/resolv.conf
+      overwrite: true
 systemd:
   units:
     - name: docker.service
@@ -17,6 +34,18 @@ systemd:
             [Service]
             ExecStart=
             ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata -c COUNT
+    - name: dns.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=DNS Resolver
+        Requires=network-online.target coreos-metadata.service
+        [Service]
+        Restart=always
+        ExecStart=/usr/bin/docker run --net=host --rm --name dns quay.io/vxlabs/consul-dnsmasq
+        ExecStop=/usr/bin/docker stop dns
+        [Install]
+        WantedBy=basic.target
     - name: consul-agent.service
       contents: |
         [Unit]
@@ -26,7 +55,8 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=servers.consul.discovery.${COREOS_CUSTOM_ZONE_ID}.vx-labs.net
+        EnvironmentFile=/etc/userdata.env
+        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=${CONSUL_JOIN_LIST}
         ExecStop=/usr/bin/docker stop consul
         [Install]
         WantedBy=basic.target

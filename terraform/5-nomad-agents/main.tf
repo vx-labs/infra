@@ -8,7 +8,7 @@ module "agent-1" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "agents.nomad"
-  user_data_count  = 5
+  user_data_count  = 6
 }
 
 module "agent-1-identity" {
@@ -17,6 +17,12 @@ module "agent-1-identity" {
   instance_private_ip = "${module.agent-1.instance_private_ip}"
   vault_role          = "nomad-role"
   vault_token_role    = "nomad-cluster"
+}
+
+resource "scaleway_user_data" "consul_join_list_1" {
+  server = module.agent-1.instance_id
+  key    = "CONSUL_JOIN_LIST"
+  value  = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"
 }
 
 module "agent-2" {
@@ -29,7 +35,7 @@ module "agent-2" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "agents.nomad"
-  user_data_count  = 5
+  user_data_count  = 6
 }
 
 module "agent-2-identity" {
@@ -38,6 +44,12 @@ module "agent-2-identity" {
   instance_private_ip = "${module.agent-2.instance_private_ip}"
   vault_role          = "nomad-role"
   vault_token_role    = "nomad-cluster"
+}
+
+resource "scaleway_user_data" "consul_join_list_2" {
+  server = module.agent-2.instance_id
+  key    = "CONSUL_JOIN_LIST"
+  value  = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"
 }
 
 module "agent-3" {
@@ -50,7 +62,7 @@ module "agent-3" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "agents.nomad"
-  user_data_count  = 5
+  user_data_count  = 6
 }
 
 module "agent-3-identity" {
@@ -59,4 +71,9 @@ module "agent-3-identity" {
   instance_private_ip = "${module.agent-3.instance_private_ip}"
   vault_role          = "nomad-role"
   vault_token_role    = "nomad-cluster"
+}
+resource "scaleway_user_data" "consul_join_list_3" {
+  server = module.agent-3.instance_id
+  key    = "CONSUL_JOIN_LIST"
+  value  = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"
 }
