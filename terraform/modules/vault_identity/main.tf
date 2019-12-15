@@ -35,7 +35,7 @@ resource "scaleway_user_data" "vault_secret" {
 resource "scaleway_user_data" "vault_addr" {
   server = "${var.instance_id}"
   key    = "VAULT_ADDR"
-  value  = "http://localhost:8200"
+  value  = "http://active.vault.service.consul:8200"
 }
 
 output "ud_count" {

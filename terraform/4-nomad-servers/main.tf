@@ -9,13 +9,19 @@ module "server-1" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "servers.nomad"
-  user_data_count  = 6
+  user_data_count  = 7
 }
 
 resource "scaleway_user_data" "cluster_size_1" {
   server = "${module.server-1.instance_id}"
   key    = "CLUSTER_SIZE"
   value  = "${length(var.master_images)}"
+}
+
+resource "scaleway_user_data" "consul_join_list_1" {
+  server = module.server-1.instance_id
+  key    = "CONSUL_JOIN_LIST"
+  value  = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"
 }
 
 module "server-1-identity" {
@@ -35,7 +41,7 @@ module "server-2" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "servers.nomad"
-  user_data_count  = 6
+  user_data_count  = 7
 }
 
 module "server-2-identity" {
@@ -51,6 +57,11 @@ resource "scaleway_user_data" "cluster_size_2" {
   key    = "CLUSTER_SIZE"
   value  = "${length(var.master_images)}"
 }
+resource "scaleway_user_data" "consul_join_list_2" {
+  server = module.server-2.instance_id
+  key    = "CONSUL_JOIN_LIST"
+  value  = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"
+}
 
 module "server-3" {
   source           = "../modules/instance"
@@ -61,7 +72,7 @@ module "server-3" {
   domain           = "${var.cloudflare_domain}"
   cloudinit        = "${file("config.yaml")}"
   discovery_record = "servers.nomad"
-  user_data_count  = 6
+  user_data_count  = 7
 }
 
 module "server-3-identity" {
@@ -77,6 +88,13 @@ resource "scaleway_user_data" "cluster_size_3" {
   key    = "CLUSTER_SIZE"
   value  = "${length(var.master_images)}"
 }
+
+resource "scaleway_user_data" "consul_join_list_3" {
+  server = module.server-3.instance_id
+  key    = "CONSUL_JOIN_LIST"
+  value  = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"
+}
+
 
 resource "scaleway_security_group" "nomad_server" {
   name        = "nomad-server"
