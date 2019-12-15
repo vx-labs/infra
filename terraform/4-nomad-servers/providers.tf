@@ -1,17 +1,13 @@
-variable "logzio_token" {}
 variable "datadog_token" {}
 variable "cloudflare_email" {}
 variable "cloudflare_token" {}
 variable "cloudflare_domain" {}
 
 provider "cloudflare" {
-  email = "${var.cloudflare_email}"
-  token = "${var.cloudflare_token}"
+  version = "~> 2.0"
+  email   = var.cloudflare_email
+  api_key = var.cloudflare_token
 }
-
-variable "scw_api_organization" {}
-variable "scw_access_key" {}
-variable "scw_secret_key" {}
 
 variable "region" {
   default = "fr-par"
@@ -23,9 +19,10 @@ variable "zone" {
 
 provider "scaleway" {
   version      = "~> 1.11"
-  organization = "${var.scw_api_organization}"
-  access_key   = "${var.scw_access_key}"
-  secret_key   = "${var.scw_secret_key}"
-  region       = "${var.region}"
-  zone         = "${var.zone}"
+  region       = var.region
+  zone         = var.zone
+}
+
+provider "ct" {
+  version = "0.4.0"
 }

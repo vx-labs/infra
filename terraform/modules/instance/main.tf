@@ -74,19 +74,27 @@ resource "scaleway_user_data" "ud_count" {
   value  = format("%d", 3 + var.user_data_count)
 }
 
+data "cloudflare_zones" "main_zone" {
+  filter {
+    name   = var.domain
+    status = "active"
+    paused = false
+  }
+}
+
 resource "cloudflare_record" "discovery_record" {
-  domain = var.domain
-  name   = "${var.discovery_record}.discovery.${var.region}"
-  value  = scaleway_server.instance.private_ip
-  type   = "A"
-  ttl    = 1
+  zone_id = data.cloudflare_zones.main_zone.zones[0].id
+  name    = "${var.discovery_record}.discovery.${var.region}"
+  value   = scaleway_server.instance.private_ip
+  type    = "A"
+  ttl     = 1
 }
 resource "cloudflare_record" "hostname_record" {
-  domain = var.domain
-  name   = "${var.hostname}.instance.discovery.${var.region}"
-  value  = scaleway_server.instance.private_ip
-  type   = "A"
-  ttl    = 1
+  zone_id = data.cloudflare_zones.main_zone.zones[0].id
+  name    = "${var.hostname}.instance.discovery.${var.region}"
+  value   = scaleway_server.instance.private_ip
+  type    = "A"
+  ttl     = 1
 }
 
 output "instance_id" {

@@ -1,0 +1,1 @@
+Creates a scaleway instance, with cloudflare DNS records pointing to its name.
