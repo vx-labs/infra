@@ -17,6 +17,9 @@ module "server-1" {
   discovery_record   = "servers.nomad"
 
   user_data = [{
+    key   = "VAULT_TOKEN_ROLE"
+    value = "nomad-cluster"
+    }, {
     key   = "CONSUL_JOIN_LIST"
     value = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"
     }, {
