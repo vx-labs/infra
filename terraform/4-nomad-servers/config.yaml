@@ -1,97 +1,53 @@
 ---
-storage:
-  files:
-    - filesystem: root
-      path: /etc/systemd/resolved.conf
-      contents:
-        inline: |
-          [Resolve]
-          DNS=127.0.0.1
-          Cache=no
-          LLMNR=no
-          DNSSEC=no
-          DNSStubListener=no
-  links:
-    - filesystem: root
-      path: /etc/resolv.conf
-      target: /run/systemd/resolve/resolv.conf
-      overwrite: true
 systemd:
   units:
-    - name: docker.service
-      dropins:
-        - name: 20-http-proxy.conf
-          contents: |
-            [Unit]
-            After=coreos-metadata.service
-            [Service]
-            EnvironmentFile=/etc/userdata.env
-    - name: "coreos-metadata.service"
-      dropins:
-        - name: "use-script.conf"
-          contents: |
-            [Service]
-            ExecStart=
-            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata -c COUNT
-    - name: dns.service
+    - name: extract-nomad-token.path
       enabled: true
       contents: |
         [Unit]
-        Description=DNS Resolver
-        Requires=network-online.target coreos-metadata.service
-        [Service]
-        Restart=always
-        ExecStart=/usr/bin/docker run --net=host --rm --name dns quay.io/vxlabs/consul-dnsmasq
-        ExecStop=/usr/bin/docker stop dns
+        Description=Create a nomad token from instance token
+        [Path]
+        PathModified=/run/vault/token
         [Install]
-        WantedBy=basic.target
-    - name: consul-agent.service
-      contents: |
-        [Unit]
-        Description=Consul agent
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
-        [Service]
-        Restart=always
-        EnvironmentFile=-/run/metadata/coreos
-        EnvironmentFile=-/etc/userdata.env
-        ExecStart=/usr/bin/docker run --net=host --rm --name consul -v /var/lib/consul:/consul/data consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0 -retry-join=${CONSUL_JOIN_LIST}
-        ExecStop=/usr/bin/docker stop consul
-        [Install]
-        WantedBy=basic.target
-    - name: vault-auth.service
-      contents: |
-        [Unit]
-        Description=Generate vault configuration
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
-        [Service]
-        EnvironmentFile=/run/metadata/coreos
-        EnvironmentFile=/etc/userdata.env
-        ExecStart=/usr/bin/touch /etc/vault.env
-        ExecStart=/usr/bin/docker run --rm --net=host --name vault-auth \
-          -v /etc/vault.env:/etc/vault.env \
-          -e VAULT_ADDR=${VAULT_ADDR} \
-          -e VAULT_ROLE_ID=${VAULT_ROLE_ID} \
-          -e VAULT_SECRET_ID=${VAULT_SECRET_ID} \
-          quay.io/vxlabs/vault-config-extractor \
-            --vault-addr-env-var VAULT_ADDR -r VAULT_ROLE_ID -s VAULT_SECRET_ID -o /etc/vault.env
-        Type=oneshot
-        [Install]
-        WantedBy=basic.target
-    - name: nomad.service
-      enabled: true
+        WantedBy=multi-user.target
+    - name: extract-nomad-token.service
       contents: |
         [Unit]
         Description=Run nomad server
-        Requires=network-online.target vault-auth.service coreos-metadata.service consul-agent.service
-        After=consul-agent.service vault-auth.service
+        Requires=network-online.target
+        [Service]
+        Type=oneshot
+        EnvironmentFile=/run/metadata/coreos
+        EnvironmentFile=/etc/userdata.env
+        ExecStart=/bin/sh -c '/usr/bin/docker  run --rm  \
+          --cap-add=IPC_LOCK \
+          --net=host \
+          -v /run/vault:/run/vault \
+          -e VAULT_ADDR=${VAULT_ADDR} \
+          -e VAULT_TOKEN=$(cat /run/vault/token) \
+          vault vault token create -ttl 10m -orphan -field 'token' -policy nomad-server -role nomad-server > /run/vault/nomad-token.tmp'
+        ExecStart=/bin/mv /run/vault/nomad-token.tmp /run/vault/nomad-token
+    - name: nomad.path
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Start nomad when token is created
+        [Path]
+        PathModified=/run/vault/nomad-token
+        [Install]
+        WantedBy=multi-user.target
+    - name: nomad.service
+      contents: |
+        [Unit]
+        Description=Run nomad server
+        Requires=network-online.target
+        After=extract-nomad-token.service
         [Service]
         EnvironmentFile=/run/metadata/coreos
-        EnvironmentFile=/etc/vault.env
         EnvironmentFile=/etc/userdata.env
-        ExecStart=/usr/bin/docker  run --rm --name nomad-server \
-          -e VAULT_TOKEN=${VAULT_TOKEN} \
+        ExecStart=/bin/sh -c '/usr/bin/docker  run --rm --name nomad-server \
+          -e VAULT_TOKEN=$(cat /run/vault/nomad-token) \
+          -e VAULT_ADDR=${VAULT_ADDR} \
           -v /var/lib/nomad:/var/lib/nomad \
           --net=host jbonachera/nomad \
             agent -config=/etc/nomad -server \
@@ -99,8 +55,8 @@ systemd:
             -consul-auto-advertise \
             -bootstrap-expect=${CLUSTER_SIZE} \
             -vault-enabled \
-            -vault-address=http://active.vault.service.consul:8200 \
-            -vault-create-from-role=${VAULT_TOKEN_ROLE}
+            -vault-address=${VAULT_ADDR} \
+            -vault-create-from-role=${VAULT_TOKEN_ROLE}'
         ExecStop=/usr/bin/docker stop nomad-server
         [Install]
         WantedBy=basic.target

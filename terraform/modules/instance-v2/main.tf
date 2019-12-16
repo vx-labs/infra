@@ -2,7 +2,11 @@ variable "region" {}
 variable "domain" {}
 variable "image" {}
 variable "hostname" {}
+variable "placement_group_id" {}
 variable "secgroup" {}
+variable "ct_snippets" {
+  type = list(string)
+}
 variable "user_data" {
   default = []
   type = list(object({
@@ -33,7 +37,7 @@ data "ct_config" "instance" {
   platform     = "custom"
   pretty_print = false
 
-  snippets = [
+  snippets = concat([
     <<EOF
 storage:
   files:
@@ -43,18 +47,18 @@ storage:
       contents:
         inline: ${var.hostname}
 EOF
-    ,
-  ]
+  ], var.ct_snippets)
 }
 
 resource "scaleway_instance_server" "instance" {
-  name              = var.hostname
-  image             = data.scaleway_image.master.id
-  enable_dynamic_ip = var.public_ip
-  enable_ipv6       = false
-  type              = var.type
-  security_group_id = var.secgroup
-  cloud_init        = data.ct_config.instance.rendered
+  name               = var.hostname
+  image              = data.scaleway_image.master.id
+  enable_dynamic_ip  = var.public_ip
+  enable_ipv6        = false
+  type               = var.type
+  security_group_id  = var.secgroup
+  placement_group_id = var.placement_group_id
+  cloud_init         = data.ct_config.instance.rendered
   root_volume {
     delete_on_termination = true
   }

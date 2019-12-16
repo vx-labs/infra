@@ -1,0 +1,166 @@
+---
+storage:
+  files:
+    - filesystem: root
+      path: /etc/vault/ca.ctmpl
+      contents:
+        inline: |
+          {{- $cn := printf "common_name=%s.instance.discovery.cloud.vx-labs.net" (env "HOSTNAME") -}}
+          {{- $path := printf "pki/issue/%s" (env "HOSTNAME") -}}
+          {{ with secret $path $cn }}{{ .Data.issuing_ca }}{{ end }}
+    - filesystem: root
+      path: /etc/vault/cert.ctmpl
+      contents:
+        inline: |
+          {{- $cn := printf "common_name=%s.instance.discovery.cloud.vx-labs.net" (env "HOSTNAME") -}}
+          {{- $path := printf "pki/issue/%s" (env "HOSTNAME") -}}
+          {{ with secret $path $cn }}{{ .Data.certificate }}{{ end }}
+    - filesystem: root
+      path: /etc/vault/privkey.ctmpl
+      contents:
+        inline: |
+          {{- $cn := printf "common_name=%s.instance.discovery.cloud.vx-labs.net" (env "HOSTNAME") -}}
+          {{- $path := printf "pki/issue/%s" (env "HOSTNAME") -}}
+          {{ with secret $path $cn }}{{ .Data.private_key }}{{ end }}
+    - filesystem: root
+      path: /etc/systemd/resolved.conf
+      contents:
+        inline: |
+          [Resolve]
+          DNS=127.0.0.1
+          Cache=no
+          LLMNR=no
+          DNSSEC=no
+          DNSStubListener=no
+    - filesystem: root
+      path: /etc/vault/agent.hcl
+      contents:
+        inline: |
+          vault {
+            address = "http://127.0.0.1:8200"
+          }
+          cache {
+            use_auto_auth_token = true
+          }
+          listener "tcp" {
+            address     = "127.0.0.1:8200"
+            tls_disable = true
+          }
+          auto_auth {
+                  method "approle" {
+                          mount_path = "auth/approle"
+                          config = {
+                                  role_id_file_path = "/run/vault/role-id"
+                                  secret_id_file_path = "/run/vault/secret-id"
+                                  remove_secret_id_file_after_reading = false
+                          }
+                  }
+            sink "file" {
+              config = {
+                  path = "/run/vault/token"
+              }
+            }
+          }
+          template {
+            source      = "/etc/vault/cert.ctmpl"
+            destination = "/run/vault/server.pem"
+          }
+          template {
+            source      = "/etc/vault/privkey.ctmpl"
+            destination = "/run/vault/privkey.pem"
+          }
+          template {
+            source      = "/etc/vault/ca.ctmpl"
+            destination = "/run/vault/ca.pem"
+          }
+  links:
+    - filesystem: root
+      path: /etc/resolv.conf
+      target: /run/systemd/resolve/resolv.conf
+      overwrite: true
+systemd:
+  units:
+    - name: docker.service
+      dropins:
+        - name: 20-http-proxy.conf
+          contents: |
+            [Unit]
+            After=coreos-metadata.service
+            [Service]
+            EnvironmentFile=/etc/userdata.env
+    - name: "coreos-metadata.service"
+      dropins:
+        - name: "use-script.conf"
+          contents: |
+            [Service]
+            ExecStart=
+            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata -c COUNT
+    - name: dns.service
+      contents: |
+        [Unit]
+        Description=DNS Resolver
+        Requires=network-online.target consul-agent.service
+        After=consul-agent.service
+        [Service]
+        Restart=always
+        ExecStart=/usr/bin/docker run --net=host --rm --name dns quay.io/vxlabs/consul-dnsmasq
+        ExecStop=/usr/bin/docker stop dns
+        [Install]
+        WantedBy=basic.target
+    - name: consul-agent.service
+      contents: |
+        [Unit]
+        Description=Consul agent
+        Requires=network-online.target coreos-metadata.service
+        After=coreos-metadata.service
+        [Service]
+        Restart=always
+        EnvironmentFile=-/run/metadata/coreos
+        EnvironmentFile=-/etc/userdata.env
+        ExecStart=/usr/bin/docker run --net=host --rm --name consul -v /var/lib/consul:/consul/data consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0 -retry-join=${CONSUL_JOIN_LIST}
+        ExecStop=/usr/bin/docker stop consul
+        [Install]
+        WantedBy=basic.target
+    - name: vault-agent.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Generate vault configuration
+        Requires=network-online.target dns.service
+        After=dns.service
+        [Service]
+        EnvironmentFile=/run/metadata/coreos
+        EnvironmentFile=/etc/userdata.env
+        ExecStartPre=/bin/mkdir -p /run/vault
+        ExecStartPre=/bin/chown 100 /run/vault
+        ExecStartPre=/bin/sh -c 'echo ${VAULT_ROLE_ID} > /run/vault/role-id'
+        ExecStartPre=/bin/sh -c 'echo ${VAULT_SECRET_ID} > /run/vault/secret-id'
+        ExecStart=/usr/bin/docker run --cap-add=IPC_LOCK --rm --net=host --name vault-agent \
+          -v /run/vault/:/run/vault/ \
+          -v /etc/vault/:/etc/vault/:ro \
+          -e VAULT_ADDR=${VAULT_ADDR} \
+          vault \
+            vault agent -config /etc/vault/agent.hcl
+        ExecStop=/usr/bin/docker stop vault-agent
+        [Install]
+        WantedBy=basic.target
+    - name: install-vault-ca.path
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Install vault Root CA in system trusted roots
+        [Path]
+        PathModified=/run/vault/ca.pem
+        [Install]
+        WantedBy=multi-user.target
+    - name: install-vault-ca.service
+      contents: |
+        [Unit]
+        Description=Run nomad server
+        ConditionPathExists=/run/vault/ca.pem
+        [Service]
+        Type=oneshot
+        ExecStart=/bin/cp /run/vault/ca.pem /etc/ssl/certs/vx.pem
+        ExecStart=/bin/chown root:root /etc/ssl/certs/vx.pem
+        ExecStart=/bin/chmod 644 /etc/ssl/certs/vx.pem
+        ExecStart=/usr/sbin/update-ca-certificates
