@@ -5,11 +5,6 @@ resource "vault_policy" "nomad-server" {
   policy = "${file("nomad-server-policy.hcl")}"
 }
 
-resource "vault_policy" "nomad-ci-builder" {
-  name   = "nomad-ci-builder"
-  policy = "${file("nomad-ci-builder-policy.hcl")}"
-}
-
 resource "vault_policy" "nomad-tls-storer" {
   name   = "nomad-tls-storer"
   policy = "${file("nomad-tls-storer-policy.hcl")}"
@@ -39,10 +34,32 @@ resource "vault_policy" "nomad-authenticator" {
   name   = "nomad-authenticator"
   policy = "${file("nomad-authenticator-policy.hcl")}"
 }
-
 resource "vault_generic_secret" "nomad-token-role" {
   path      = "/auth/token/roles/nomad-cluster"
-  data_json = "${file("nomad-cluster-role.json")}"
+  data_json = <<EOT
+{
+  "disallowed_policies": "nomad-server",
+  "explicit_max_ttl": 0,
+  "name": "nomad-cluster",
+  "orphan": true,
+  "period": 259200,
+  "renewable": true
+}
+  EOT
+}
+
+resource "vault_generic_secret" "nomad-server-role" {
+  path      = "/auth/token/roles/nomad-server"
+  data_json = <<EOT
+{
+  "disallowed_policies": "instance",
+  "explicit_max_ttl": 0,
+  "name": "nomad-server",
+  "orphan": true,
+  "period": 259200,
+  "renewable": true
+}
+  EOT
 }
 
 resource "vault_auth_backend" "approle" {
@@ -50,7 +67,7 @@ resource "vault_auth_backend" "approle" {
 }
 
 resource "vault_approle_auth_backend_role" "nomad-agent" {
-  depends_on         = ["vault_policy.nomad-server"]
+  depends_on         = [vault_policy.nomad-server]
   role_name          = "nomad-role"
   bound_cidr_list    = ["10.0.0.0/8"]
   secret_id_num_uses = 0
