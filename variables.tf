@@ -8,3 +8,10 @@ variable "lb_count" {
 variable "management_ip" {
   default = "92.169.229.177"
 }
+
+variable "internal_ca_cn" {
+  default = "Internal Root CA"
+}
+variable "internal_ca_org" {
+  default = "VX-Labs"
+}

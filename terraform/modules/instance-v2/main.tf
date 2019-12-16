@@ -5,7 +5,8 @@ variable "hostname" {}
 variable "placement_group_id" {}
 variable "secgroup" {}
 variable "ct_snippets" {
-  type = list(string)
+  default = []
+  type    = list(string)
 }
 variable "user_data" {
   default = []
