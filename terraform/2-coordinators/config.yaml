@@ -29,7 +29,17 @@ systemd:
         [Service]
         EnvironmentFile=-/run/metadata/coreos
         EnvironmentFile=-/etc/userdata.env
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -server -ui -client=0.0.0.0  -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -retry-join=${CONSUL_JOIN_LIST} -bootstrap-expect=${CONSUL_CLUSTER_SIZE}
+        ExecStart=/usr/bin/docker run --rm \
+          -e CHECKPOINT_DISABLE=1 \
+          -e http_proxy=${http_proxy} \
+          -e https_proxy=${https_proxy} \
+          --name consul \
+          -v /var/lib/consul:/consul/data \
+          --net=host \
+            consul agent -server -ui -client=0.0.0.0 \
+              -bind=${COREOS_CUSTOM_PRIVATE_IPV4} \
+              -retry-join=${CONSUL_JOIN_LIST} \
+              -bootstrap-expect=${CONSUL_CLUSTER_SIZE}
         ExecStop=/usr/bin/docker stop consul
         [Install]
         WantedBy=basic.target
@@ -43,7 +53,13 @@ systemd:
         [Service]
         Restart=always
         EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name vault --net=host --cap-add=IPC_LOCK -e 'VAULT_LOCAL_CONFIG={"ui": true, "listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": true}}, "backend": {"consul": {"service_tags": "traefik.http.routers.vault.rule=Host(`vault.cloud.vx-labs.net`),traefik.enable=true,traefik.http.routers.vault.tls=true,traefik.http.routers.vault.tls.certresolver=le,traefik.http.services.vault.loadbalancer.healthcheck.path=/v1/sys/health?standbycode=200,traefik.http.routers.vault.service=vault"}}, "default_lease_ttl": "168h", "max_lease_ttl": "720h"}' vault server
+        ExecStart=/usr/bin/docker run --rm --name vault \
+          --net=host --cap-add=IPC_LOCK \
+          -e CHECKPOINT_DISABLE=1 \
+          -e http_proxy=${http_proxy} \
+          -e https_proxy=${https_proxy} \
+          -e 'VAULT_LOCAL_CONFIG={"ui": true, "listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": true}}, "backend": {"consul": {"service_tags": "traefik.http.routers.vault.rule=Host(`vault.cloud.vx-labs.net`),traefik.enable=true,traefik.http.routers.vault.tls=true,traefik.http.routers.vault.tls.certresolver=le,traefik.http.services.vault.loadbalancer.healthcheck.path=/v1/sys/health?standbycode=200,traefik.http.routers.vault.service=vault"}}, "default_lease_ttl": "168h", "max_lease_ttl": "720h"}' \
+            vault server
         ExecStop=/usr/bin/docker stop vault
         [Install]
         WantedBy=basic.target
