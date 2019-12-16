@@ -1,99 +1,18 @@
 ---
-storage:
-  files:
-    - filesystem: root
-      path: /etc/systemd/resolved.conf
-      contents:
-        inline: |
-          [Resolve]
-          DNS=127.0.0.1
-          Cache=no
-          LLMNR=no
-          DNSSEC=no
-          DNSStubListener=no
-  links:
-    - filesystem: root
-      path: /etc/resolv.conf
-      target: /run/systemd/resolve/resolv.conf
-      overwrite: true
 systemd:
   units:
-    - name: docker.service
-      dropins:
-        - name: 20-http-proxy.conf
-          contents: |
-            [Unit]
-            After=coreos-metadata.service
-            Requires=coreos-metadata.service
-            [Service]
-            EnvironmentFile=/etc/userdata.env
-    - name: "coreos-metadata.service"
-      dropins:
-        - name: "use-script.conf"
-          contents: |
-            [Service]
-            ExecStart=
-            ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata -c COUNT
-    - name: dns.service
-      enabled: true
-      contents: |
-        [Unit]
-        Description=DNS Resolver
-        Requires=network-online.target coreos-metadata.service
-        [Service]
-        Restart=always
-        ExecStart=/usr/bin/docker run --net=host --rm --name dns quay.io/vxlabs/consul-dnsmasq
-        ExecStop=/usr/bin/docker stop dns
-        [Install]
-        WantedBy=basic.target
-    - name: consul-agent.service
-      contents: |
-        [Unit]
-        Description=Consul agent
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
-        [Service]
-        Restart=always
-        EnvironmentFile=-/run/metadata/coreos
-        EnvironmentFile=/etc/userdata.env
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=${CONSUL_JOIN_LIST}
-        ExecStop=/usr/bin/docker stop consul
-        [Install]
-        WantedBy=basic.target
-    - name: vault-auth.service
-      contents: |
-        [Unit]
-        Description=Generate vault configuration
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
-        [Service]
-        EnvironmentFile=/run/metadata/coreos
-        EnvironmentFile=/etc/userdata.env
-        ExecStart=/usr/bin/touch /etc/vault.env
-        ExecStart=/usr/bin/docker run --net=host --rm --name vault-auth \
-          -v /etc/vault.env:/etc/vault.env \
-          -e VAULT_ADDR=${VAULT_ADDR} \
-          -e VAULT_ROLE_ID=${VAULT_ROLE_ID} \
-          -e VAULT_SECRET_ID=${VAULT_SECRET_ID} \
-          quay.io/vxlabs/vault-config-extractor \
-            --vault-addr-env-var VAULT_ADDR -r VAULT_ROLE_ID -s VAULT_SECRET_ID -o /etc/vault.env
-        Type=oneshot
-        [Install]
-        WantedBy=basic.target
     - name: nomad-agent.service
       enabled: true
       contents: |
         [Unit]
         Description=Run nomad agent
-        Requires=network-online.target vault-auth.service coreos-metadata.service consul-agent.service
-        After=consul-agent.service vault-auth.service
+        Requires=network-online.target vault-agent.service
+        After=vault-agent.service
         [Service]
         EnvironmentFile=/run/metadata/coreos
-        EnvironmentFile=/etc/vault.env
         EnvironmentFile=/etc/userdata.env
         ExecStartPre=/usr/bin/mkdir -p /var/lib/nomad
-        ExecStart=/usr/bin/docker  run --rm --privileged --name nomad-agent \
-          -e VAULT_TOKEN=${VAULT_TOKEN} \
+        ExecStart=/usr/bin/docker run --rm --privileged --name nomad-agent \
           -v /tmp:/tmp \
           -v /var/run/docker.sock:/var/run/docker.sock \
           --mount type=bind,source=/var/lib/nomad,destination=/var/lib/nomad,bind-propagation=shared \
@@ -102,8 +21,7 @@ systemd:
             -consul-client-auto-join  \
             -consul-auto-advertise \
             -vault-enabled \
-            -vault-address=${VAULT_ADDR} \
-            -vault-create-from-role=${VAULT_TOKEN_ROLE}
+            -vault-address=${VAULT_ADDR}
         ExecStop=/usr/bin/docker stop nomad-agent
         [Install]
         WantedBy=basic.target
