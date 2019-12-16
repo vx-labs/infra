@@ -77,7 +77,13 @@ EOH
 
       service {
         name = "prometheus"
-        tags = ["urlprefix-prometheus.cloud.vx-labs.net/"]
+        tags = [
+          "traefik.enable=true",
+          "traefik.http.routers.prometheus.rule=host(`prometheus.cloud.vx-labs.net`)",
+          "traefik.http.routers.prometheus.service=prometheus",
+          "traefik.http.routers.prometheus.tls.certresolver=le",
+          "traefik.http.routers.prometheus.tls=true"
+        ]
         port = "prometheus_ui"
 
         check {

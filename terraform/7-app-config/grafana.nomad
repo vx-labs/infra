@@ -60,7 +60,7 @@ no_proxy="10.0.0.0/8,172.16.0.0/12"
 
         data = <<EOH
 [server]
-root_url = http://grafana.cloud.vx-labs.net
+root_url = https://grafana.cloud.vx-labs.net
 [security]
 admin_user = julien@bonachera.fr
 disable_gravatar = true
@@ -94,7 +94,7 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
-    url: http://prometheus.cloud.vx-labs.net/
+    url: https://prometheus.cloud.vx-labs.net/
 
 EOH
       }
@@ -123,7 +123,13 @@ EOH
       service {
         name = "grafana"
         port = "http"
-        tags = ["urlprefix-grafana.cloud.vx-labs.net/"]
+        tags = [
+          "traefik.enable=true",
+          "traefik.http.routers.grafana.rule=host(`grafana.cloud.vx-labs.net`)",
+          "traefik.http.routers.grafana.service=grafana",
+          "traefik.http.routers.grafana.tls.certresolver=le",
+          "traefik.http.routers.grafana.tls=true"
+        ]
 
         check {
           name     = "Grafana HTTP"

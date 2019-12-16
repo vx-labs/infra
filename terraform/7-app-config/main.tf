@@ -3,7 +3,6 @@ provider "consul" {}
 
 provider "nomad" {}
 
-variable "letsencrypt_email" {}
 variable "mqtt_auth_tokens" {}
 variable "mqtt_signing_token" {}
 variable "tracing_es_url" {}
