@@ -27,7 +27,7 @@ storage:
       contents:
         inline: |
           [Resolve]
-          DNS=127.0.0.1
+          DNS=172.17.0.1
           Cache=no
           LLMNR=no
           DNSSEC=no
@@ -87,6 +87,7 @@ systemd:
             [Unit]
             After=coreos-metadata.service
             [Service]
+            Environment=DOCKER_OPTS=--bip="172.17.0.1/16"
             EnvironmentFile=/etc/userdata.env
     - name: "coreos-metadata.service"
       dropins:

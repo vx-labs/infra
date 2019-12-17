@@ -48,7 +48,7 @@ job "logzio" {
   output_tags_fieldname @log_name
   buffer_type    file
   buffer_path    /tmp/fluentd.buffer
-  proxy_uri http://http.proxy.discovery.par1.vx-labs.net:3128
+  proxy_uri http://http.proxy.discovery.fr-par.vx-labs.net:3128
   flush_interval 10s
   buffer_chunk_limit 1m   # Logz.io has bulk limit of 10M. We #recommend set this to 1M, to avoid oversized bulks
 </match>

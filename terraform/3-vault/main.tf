@@ -112,7 +112,7 @@ resource "vault_generic_secret" "vx-config" {
 
   data_json = <<EOT
 {
-  "http_proxy": "http://http.proxy.discovery.par1.vx-labs.net:3128",
+  "http_proxy": "http://http.proxy.discovery.fr-par.vx-labs.net:3128",
   "jwt_sign_key": "${var.jwt_sign_key}",
   "acme_email": "julien@bonachera.fr"
 }

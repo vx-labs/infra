@@ -128,7 +128,8 @@ EOH
           "traefik.http.routers.grafana.rule=host(`grafana.cloud.vx-labs.net`)",
           "traefik.http.routers.grafana.service=grafana",
           "traefik.http.routers.grafana.tls.certresolver=le",
-          "traefik.http.routers.grafana.tls=true"
+          "traefik.http.routers.grafana.tls=true",
+          "traefik.http.routers.grafana.entrypoints=https"
         ]
 
         check {

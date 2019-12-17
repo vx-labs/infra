@@ -82,7 +82,8 @@ EOH
           "traefik.http.routers.prometheus.rule=host(`prometheus.cloud.vx-labs.net`)",
           "traefik.http.routers.prometheus.service=prometheus",
           "traefik.http.routers.prometheus.tls.certresolver=le",
-          "traefik.http.routers.prometheus.tls=true"
+          "traefik.http.routers.prometheus.tls=true",
+          "traefik.http.routers.prometheus.entrypoints=https"
         ]
         port = "prometheus_ui"
 
