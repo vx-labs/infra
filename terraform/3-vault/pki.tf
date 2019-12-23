@@ -1,7 +1,7 @@
 resource "vault_pki_secret_backend" "pki" {
   path                      = "pki"
   default_lease_ttl_seconds = 3600
-  max_lease_ttl_seconds     = 86400
+  max_lease_ttl_seconds     = 315360000
 }
 
 resource "vault_pki_secret_backend_config_urls" "config_urls" {
@@ -22,7 +22,7 @@ resource "vault_pki_secret_backend_root_cert" "root_ca" {
 
   type                 = "internal"
   common_name          = "cloud.vx-labs.net"
-  ttl                  = "315360000"
+  ttl                  = "315360000s"
   format               = "pem"
   key_type             = "rsa"
   key_bits             = 4096
@@ -42,4 +42,16 @@ resource "vault_pki_secret_backend_role" "instance-role" {
   require_cn        = true
   generate_lease    = true
   max_ttl           = "86400"
+}
+resource "vault_pki_secret_backend_role" "grpc-role" {
+  backend           = vault_pki_secret_backend.pki.path
+  name              = "grpc"
+  allow_localhost   = false
+  allow_any_name    = true
+  enforce_hostnames = false
+  organization      = [var.internal_ca_org]
+  ou                = ["GRPC"]
+  require_cn        = true
+  generate_lease    = true
+  max_ttl           = "24h"
 }

@@ -81,3 +81,6 @@ path "secret/data/mqtt/tls/deployment.iot.cloud.vx-labs.net/certificate" {
 path "secret/data/vx/cloudflare" {
   capabilities = ["read"]
 }
+path "pki/issue/grpc" {
+  capabilities = ["create", "update"]
+}
