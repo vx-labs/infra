@@ -31,26 +31,41 @@ job "logzio" {
         data = <<EOH
 <source>
   @type forward
+  add_tag_prefix net
 </source>
-<filter **>
+<match net.**>
+  @type rewrite_tag_filter
+  <rule>
+    key log
+    pattern .*
+    tag json
+  </rule>
+</match>
+<filter json>
   @type parser
   key_name log
   format json
   reserve_data false
+  emit_invalid_record_to_error false
 </filter>
 <match **>
+  @type stdout
+</match>
+<match json>
   @type logzio_buffered
 {{ with secret "secret/data/vx/logzio" }}
   endpoint_url "https://listener.logz.io:8071?token={{ .Data.token }}&type=mqtt"
 {{ end }}
   output_include_time true
   output_include_tags true
-  output_tags_fieldname @log_name
-  buffer_type    file
-  buffer_path    /tmp/fluentd.buffer
-  proxy_uri http://http.proxy.discovery.fr-par.vx-labs.net:3128
-  flush_interval 10s
-  buffer_chunk_limit 1m   # Logz.io has bulk limit of 10M. We #recommend set this to 1M, to avoid oversized bulks
+  http_idle_timeout 10
+  <buffer>
+      @type memory
+      flush_thread_count 4
+      flush_interval 3s
+      chunk_limit_size 16m      # Logz.io bulk limit is decoupled from chunk_limit_size. Set whatever you want.
+      queue_limit_length 4096
+  </buffer>
 </match>
 
 EOH

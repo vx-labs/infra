@@ -33,7 +33,7 @@ resource "vault_generic_secret" "mqtt-config" {
 
   data_json = <<EOT
 {
-"static_tokens": ["${join("\",\"", split(",", var.mqtt_auth_tokens))}"],
+"static_tokens": "${var.mqtt_auth_tokens}",
 "signing_token": "${var.mqtt_signing_token}"
 }
 EOT
