@@ -29,6 +29,9 @@ global:
 
 scrape_configs:
 
+  - job_name: 'haproxy'
+    static_configs:
+      - targets: ['lb-1.instance.discovery.fr-par.vx-labs.net:8404']
   - job_name: 'wasp'
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus_ui" }}:8500'
@@ -42,6 +45,7 @@ scrape_configs:
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus_ui" }}:8500'
       services: ['nomad-client', 'nomad']
+      tags: ['http']
     scrape_interval: 30s
     metrics_path: /v1/metrics
     params:
