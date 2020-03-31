@@ -1,7 +1,21 @@
+data "cloudflare_zones" "main_zone" {
+  filter {
+    name   = var.cloudflare_domain
+    status = "active"
+    paused = false
+  }
+}
 resource "cloudflare_record" "entrypoint" {
-  domain = var.cloudflare_domain
+  zone_id = data.cloudflare_zones.main_zone.zones[0].id
   name   = "cloud"
-  value  = scaleway_ip.nomad-lb-ip.ip
+  value  = scaleway_instance_ip.lb_ip.address
+  type   = "A"
+  ttl    = 1
+}
+resource "cloudflare_record" "admin" {
+  zone_id = data.cloudflare_zones.main_zone.zones[0].id
+  name   = "lb.${var.region}"
+  value  = scaleway_instance_ip.lb_ip.address
   type   = "A"
   ttl    = 1
 }

@@ -51,7 +51,7 @@ systemd:
           -l "traefik.enable=true" \
           -v /etc/traefik/le.json:/etc/traefik/le.json \
           -v /var/run/docker.sock:/var/run/docker.sock \
-          -v /etc/traefik/:/etc/traefik/:ro traefik:v2.1.1 \
+          -v /etc/traefik/:/etc/traefik/:ro traefik:v2.2.0 \
               --global.checknewversion="false" \
               --global.sendanonymoususage="false" \
               --accesslog \

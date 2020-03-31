@@ -3,37 +3,34 @@ data "scaleway_image" "lb" {
   name         = element(var.lb_images, 0)
 }
 
-resource "scaleway_ip" "nomad-lb-ip" {
-  server = module.lb-1.instance_id
+resource "scaleway_instance_ip" "lb_ip" {}
+
+resource "scaleway_instance_placement_group" "availability_group" {
+  name        = "load-balancers"
+  policy_mode = "enforced"
 }
 
 module "lb-1" {
-  source           = "../modules/instance"
-  image            = element(var.lb_images, 0)
-  secgroup         = scaleway_security_group.nomad_lb.id
-  hostname         = "lb-1"
-  region           = var.region
-  domain           = var.cloudflare_domain
-  cloudinit        = file("config.yaml")
-  discovery_record = "servers.lb"
-  user_data_count  = 3
-}
-
-resource "scaleway_user_data" "consul_join_list" {
-  server = module.lb-1.instance_id
-  key    = "CONSUL_JOIN_LIST"
-  value  = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"
-}
-resource "scaleway_user_data" "le_email" {
-  server = module.lb-1.instance_id
-  key    = "LE_EMAIL"
-  value  = var.letsencrypt_email
-}
-
-resource "scaleway_user_data" "le_dashboard" {
-  server = module.lb-1.instance_id
-  key    = "LB_DASHBOARD_DOMAIN"
-  value  = "lb.${var.cloudflare_domain}"
+  source             = "../modules/instance-v2"
+  image              = element(var.lb_images, 0)
+  secgroup           = scaleway_security_group.nomad_lb.id
+  hostname           = "lb-1"
+  ip_id              = scaleway_instance_ip.lb_ip.id
+  region             = var.region
+  domain             = var.cloudflare_domain
+  cloud_init         = file("config.yaml")
+  placement_group_id = scaleway_instance_placement_group.availability_group.id
+  discovery_record   = "servers.lb"
+  user_data = [{
+    key   = "CONSUL_JOIN_LIST"
+    value = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"
+    }, {
+    key   = "LE_EMAIL"
+    value = var.letsencrypt_email
+    }, {
+    key   = "LB_DASHBOARD_DOMAIN"
+    value = "lb.${var.region}.${var.cloudflare_domain}"
+  }]
 }
 
 resource "scaleway_security_group" "nomad_lb" {
@@ -53,11 +50,10 @@ resource "scaleway_security_group_rule" "ssh_accept" {
 
 resource "scaleway_security_group_rule" "drop_all_ssh" {
   security_group = scaleway_security_group.nomad_lb.id
-  depends_on     = ["scaleway_security_group_rule.ssh_accept"]
-
-  action    = "drop"
-  direction = "inbound"
-  ip_range  = "0.0.0.0/0"
-  protocol  = "TCP"
-  port      = 22
+  depends_on     = [scaleway_security_group_rule.ssh_accept]
+  action         = "drop"
+  direction      = "inbound"
+  ip_range       = "0.0.0.0/0"
+  protocol       = "TCP"
+  port           = 22
 }
