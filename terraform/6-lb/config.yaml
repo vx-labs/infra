@@ -2,6 +2,53 @@
 storage:
   files:
     - filesystem: root
+      path: /etc/haproxy/haproxy.cfg
+      mode: 0600
+      owner: root
+      contents:
+        inline: |
+          global
+            log stdout local0
+
+          resolvers consul
+              nameserver local 127.0.0.1:8600
+              accepted_payload_size 8192 # allow larger DNS payloads
+
+          backend mqtt
+              balance roundrobin
+              server-template mqtt 5 _mqtt._tcp.service.consul check resolvers consul init-addr none
+              timeout server 100s
+              timeout connect 100s
+
+          backend mqtts
+              balance roundrobin
+              server-template mqtt 5 _mqtts._tcp.service.consul check resolvers consul init-addr none
+              timeout server 100s
+              timeout connect 100s
+
+          frontend mqtt
+              bind :1883 tfo
+              default_backend mqtt
+              timeout client 100s
+
+          frontend mqtts
+              bind :8883 tfo
+              default_backend mqtts
+              timeout client 100s
+
+          frontend stats
+              mode            http
+              maxconn 10
+              bind 0.0.0.0:8404
+              stats enable
+              acl network_allowed src 192.168.0.0/16 172.16.0.0/12 10.0.0.0/8 127.0.0.0/8
+              tcp-request connection reject if !network_allowed
+              http-request use-service prometheus-exporter if { path /metrics }
+              stats uri /
+              stats refresh 5s
+              timeout client 100s
+
+    - filesystem: root
       path: /etc/traefik/le.json
       mode: 0600
       owner: root
@@ -14,20 +61,6 @@ systemd:
             [Service]
             ExecStart=
             ExecStart=/usr/share/oem/scaleway-coreos-custom-metadata -c COUNT
-    - name: consul-agent.service
-      contents: |
-        [Unit]
-        Description=Consul agent
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
-        [Service]
-        Restart=always
-        EnvironmentFile=-/run/metadata/coreos
-        EnvironmentFile=-/etc/userdata.env
-        ExecStart=/usr/bin/docker run --rm --name consul -v /var/lib/consul:/consul/data --net=host consul agent -bind=${COREOS_CUSTOM_PRIVATE_IPV4} -client=0.0.0.0  -retry-join=${CONSUL_JOIN_LIST}
-        ExecStop=/usr/bin/docker stop consul
-        [Install]
-        WantedBy=basic.target
     - name: traefik.service
       enabled: true
       contents: |
@@ -60,10 +93,6 @@ systemd:
               --entryPoints.http.address=":80" \
               --entryPoints.https \
               --entryPoints.https.address=":443" \
-              --entryPoints.mqtt \
-              --entryPoints.mqtt.address=":1883" \
-              --entryPoints.mqtts \
-              --entryPoints.mqtts.address=":8883" \
               --providers.consulcatalog.exposedbydefault="false" \
               --log \
               --log.level="info" \
@@ -74,6 +103,23 @@ systemd:
               --certificatesresolvers.le.acme.email="${LE_EMAIL}" \
               --providers.docker.endpoint=unix:///var/run/docker.sock \
               --providers.docker.exposedByDefault=false
+        [Install]
+        WantedBy=basic.target
+    - name: haproxy.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=HAProxy LB
+        Requires=network-online.target consul-agent.service
+        After=consul-agent.service
+        [Service]
+        Restart=always
+        EnvironmentFile=-/run/metadata/coreos
+        EnvironmentFile=-/etc/userdata.env
+        ExecStop=/usr/bin/docker stop traefik
+        ExecStart=/usr/bin/docker run --rm --name haproxy --net=host \
+          -v /etc/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg \
+          haproxy:alpine
         [Install]
         WantedBy=basic.target
 

@@ -1,4 +1,4 @@
-job "logzio" {
+job "fluentd" {
   datacenters = ["dc1"]
   type        = "system"
 
@@ -16,8 +16,8 @@ job "logzio" {
 
     task "fluentd" {
       env {
-        http_proxy  = "http://http.proxy.discovery.par1.vx-labs.net:3128"
-        https_proxy = "http://http.proxy.discovery.par1.vx-labs.net:3128"
+        http_proxy  = "http://http.proxy.discovery.fr-par.vx-labs.net:3128"
+        https_proxy = "http://http.proxy.discovery.fr-par.vx-labs.net:3128"
       }
 
       vault {
@@ -33,15 +33,27 @@ job "logzio" {
   @type forward
   add_tag_prefix net
 </source>
+
 <match net.**>
-  @type rewrite_tag_filter
-  <rule>
-    key log
-    pattern .*
-    tag json
-  </rule>
+  @type route
+  remove_tag_prefix net
+  <route **>
+    copy
+  </route>
+  <route **>
+    copy
+    @label @STDOUT
+  </route>
 </match>
-<filter json>
+
+
+<label @STDOUT>
+  <match **>
+    @type stdout
+  </match>
+</label>
+
+<filter **>
   @type parser
   key_name log
   format json
@@ -49,9 +61,6 @@ job "logzio" {
   emit_invalid_record_to_error false
 </filter>
 <match **>
-  @type stdout
-</match>
-<match json>
   @type logzio_buffered
 {{ with secret "secret/data/vx/logzio" }}
   endpoint_url "https://listener.logz.io:8071?token={{ .Data.token }}&type=mqtt"

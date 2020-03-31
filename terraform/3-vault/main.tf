@@ -1,5 +1,6 @@
 provider "vault" {}
 
+variable "mqtt_auth_tokens" {}
 resource "vault_policy" "nomad-server" {
   name   = "nomad-server"
   policy = "${file("nomad-server-policy.hcl")}"
@@ -114,6 +115,7 @@ resource "vault_generic_secret" "vx-config" {
 {
   "http_proxy": "http://http.proxy.discovery.fr-par.vx-labs.net:3128",
   "jwt_sign_key": "${var.jwt_sign_key}",
+  "static_tokens": "${var.mqtt_auth_tokens}",
   "acme_email": "julien@bonachera.fr"
 }
 EOT

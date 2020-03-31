@@ -29,17 +29,16 @@ global:
 
 scrape_configs:
 
-  - job_name: 'mqtt_metrics'
-
+  - job_name: 'wasp'
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus_ui" }}:8500'
-      services: ['mqtt-metrics']
+      services: ['wasp']
+      tags: ['prometheus']
     scrape_interval: 30s
     metrics_path: /metrics
     params:
       format: ['prometheus']
   - job_name: 'nomad_metrics'
-
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus_ui" }}:8500'
       services: ['nomad-client', 'nomad']

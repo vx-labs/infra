@@ -25,18 +25,3 @@ systemd:
         ExecStop=/usr/bin/docker stop nomad-agent
         [Install]
         WantedBy=basic.target
-    - name: linkerd.service
-      enabled: true
-      contents: |
-        [Unit]
-        Description=Run linkerd
-        Requires=network-online.target coreos-metadata.service
-        After=coreos-metadata.service
-        [Service]
-        Restart=always
-        EnvironmentFile=-/run/metadata/coreos
-        ExecStart=/usr/bin/docker run --rm --name linkerd --net=host quay.io/jbonachera/linkerd
-        ExecStop=/usr/bin/docker stop linkerd
-        [Install]
-        WantedBy=basic.target
-

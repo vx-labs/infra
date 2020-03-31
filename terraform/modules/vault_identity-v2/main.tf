@@ -11,6 +11,9 @@ variable "domain" {}
 variable "image" {}
 variable "hostname" {}
 variable "secgroup" {}
+variable "ip_id" {
+    default = ""
+}
 variable policies {
   type    = list(string)
   default = []
@@ -71,18 +74,19 @@ resource "vault_approle_auth_backend_role" "instance-role" {
 }
 
 module "instance" {
-  source           = "../instance-v2"
-  image            = var.image
-  secgroup         = var.secgroup
-  hostname         = var.hostname
-  region           = var.region
-  type             = var.type
-  placement_group_id  = var.placement_group_id
-  domain           = var.domain
-  cloud_init       = var.cloud_init
-  discovery_record = var.discovery_record
-  public_ip        = var.public_ip
-  ct_snippets      = [file("${path.module}/vault-ct.yaml")]
+  source             = "../instance-v2"
+  image              = var.image
+  secgroup           = var.secgroup
+  hostname           = var.hostname
+  region             = var.region
+  ip_id              = var.ip_id
+  type               = var.type
+  placement_group_id = var.placement_group_id
+  domain             = var.domain
+  cloud_init         = var.cloud_init
+  discovery_record   = var.discovery_record
+  public_ip          = var.public_ip
+  ct_snippets        = [file("${path.module}/vault-ct.yaml")]
   user_data = concat([
     {
       key   = "VAULT_ROLE_ID"

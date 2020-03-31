@@ -11,16 +11,16 @@ resource "scaleway_instance_placement_group" "availability_group" {
 }
 
 module "lb-1" {
-  source             = "../modules/instance-v2"
+  source             = "../modules/vault_identity-v2"
+  cloud_init         = file("config.yaml")
+  discovery_record   = "agents.nomad"
   image              = element(var.lb_images, 0)
   secgroup           = scaleway_security_group.nomad_lb.id
   hostname           = "lb-1"
   ip_id              = scaleway_instance_ip.lb_ip.id
   region             = var.region
   domain             = var.cloudflare_domain
-  cloud_init         = file("config.yaml")
   placement_group_id = scaleway_instance_placement_group.availability_group.id
-  discovery_record   = "servers.lb"
   user_data = [{
     key   = "CONSUL_JOIN_LIST"
     value = "servers.consul.discovery.${var.region}.${var.cloudflare_domain}"

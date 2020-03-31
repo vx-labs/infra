@@ -4,6 +4,9 @@ variable "image" {}
 variable "hostname" {}
 variable "placement_group_id" {}
 variable "secgroup" {}
+variable "ip_id" {
+  default = ""
+}
 variable "ct_snippets" {
   default = []
   type    = list(string)
@@ -57,6 +60,7 @@ resource "scaleway_instance_server" "instance" {
   enable_dynamic_ip  = var.public_ip
   enable_ipv6        = false
   type               = var.type
+  ip_id              = var.ip_id
   security_group_id  = var.secgroup
   placement_group_id = var.placement_group_id
   cloud_init         = data.ct_config.instance.rendered
