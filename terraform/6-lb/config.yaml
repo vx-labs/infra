@@ -26,6 +26,17 @@ storage:
               timeout server 100s
               timeout connect 100s
 
+          backend rpc
+              balance roundrobin
+              server-template mqtt 5 _wasp._rpc.service.consul check resolvers consul init-addr none
+              timeout server 100s
+              timeout connect 100s
+
+          frontend rpc
+              bind :8443 tfo
+              default_backend rpc
+              timeout client 100s
+
           frontend mqtt
               bind :1883 tfo
               default_backend mqtt
