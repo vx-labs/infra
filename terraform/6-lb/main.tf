@@ -13,7 +13,7 @@ resource "scaleway_instance_placement_group" "availability_group" {
 module "lb-1" {
   source             = "../modules/vault_identity-v2"
   cloud_init         = file("config.yaml")
-  discovery_record   = "agents.nomad"
+  discovery_record   = "lb.nomad"
   image              = element(var.lb_images, 0)
   secgroup           = scaleway_security_group.nomad_lb.id
   hostname           = "lb-1"

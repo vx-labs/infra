@@ -19,3 +19,10 @@ resource "cloudflare_record" "admin" {
   type   = "A"
   ttl    = 1
 }
+resource "cloudflare_record" "services" {
+  zone_id = data.cloudflare_zones.main_zone.zones[0].id
+  name   = "*.services.discovery.${var.region}"
+  value  = module.lb-1.instance_private_ip
+  type   = "A"
+  ttl    = 1
+}
