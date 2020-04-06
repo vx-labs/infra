@@ -115,3 +115,14 @@ resource "vault_approle_auth_backend_role_secret_id" "secret" {
   role_name  = var.hostname
   cidr_list  = ["10.0.0.0/8"]
 }
+output "instance_id" {
+  value = module.instance.instance_id
+}
+
+output "instance_private_ip" {
+  value = module.instance.instance_private_ip
+}
+
+output "instance_public_ip" {
+  value = module.instance.instance_public_ip
+}
